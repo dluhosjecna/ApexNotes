@@ -1,0 +1,20 @@
+{
+  "name": "ApexNotes – Digitální Rally Navigátor",
+  "short_name": "ApexNotes",
+  "description": "Autonomní digitální rally spolujezdec s českým rozpisem a dynamickým předstihem",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090b10",
+  "theme_color": "#090b10",
+  "lang": "cs-CZ",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,296 @@
+{
+  "P1": {
+    "code": "P1",
+    "text_cz": "Pravá jedna",
+    "file": "audio/P1.wav",
+    "freq": 520,
+    "beeps": 2
+  },
+  "P2": {
+    "code": "P2",
+    "text_cz": "Pravá dva",
+    "file": "audio/P2.wav",
+    "freq": 480,
+    "beeps": 2
+  },
+  "P3": {
+    "code": "P3",
+    "text_cz": "Pravá tři",
+    "file": "audio/P3.wav",
+    "freq": 440,
+    "beeps": 1
+  },
+  "P4": {
+    "code": "P4",
+    "text_cz": "Pravá čtyři",
+    "file": "audio/P4.wav",
+    "freq": 400,
+    "beeps": 1
+  },
+  "P5": {
+    "code": "P5",
+    "text_cz": "Pravá pět",
+    "file": "audio/P5.wav",
+    "freq": 360,
+    "beeps": 1
+  },
+  "P6": {
+    "code": "P6",
+    "text_cz": "Pravá šest",
+    "file": "audio/P6.wav",
+    "freq": 330,
+    "beeps": 1
+  },
+  "L1": {
+    "code": "L1",
+    "text_cz": "Levá jedna",
+    "file": "audio/L1.wav",
+    "freq": 520,
+    "beeps": 2
+  },
+  "L2": {
+    "code": "L2",
+    "text_cz": "Levá dva",
+    "file": "audio/L2.wav",
+    "freq": 480,
+    "beeps": 2
+  },
+  "L3": {
+    "code": "L3",
+    "text_cz": "Levá tři",
+    "file": "audio/L3.wav",
+    "freq": 440,
+    "beeps": 1
+  },
+  "L4": {
+    "code": "L4",
+    "text_cz": "Levá čtyři",
+    "file": "audio/L4.wav",
+    "freq": 400,
+    "beeps": 1
+  },
+  "L5": {
+    "code": "L5",
+    "text_cz": "Levá pět",
+    "file": "audio/L5.wav",
+    "freq": 360,
+    "beeps": 1
+  },
+  "L6": {
+    "code": "L6",
+    "text_cz": "Levá šest",
+    "file": "audio/L6.wav",
+    "freq": 330,
+    "beeps": 1
+  },
+  "vracak": {
+    "code": "vracak",
+    "text_cz": "Vracák",
+    "file": "audio/vracak.wav",
+    "freq": 660,
+    "beeps": 3
+  },
+  "utahuje": {
+    "code": "utahuje",
+    "text_cz": "Utahuje",
+    "file": "audio/utahuje.wav",
+    "freq": 580,
+    "beeps": 2
+  },
+  "otevira": {
+    "code": "otevira",
+    "text_cz": "Otevírá",
+    "file": "audio/otevira.wav",
+    "freq": 350,
+    "beeps": 1
+  },
+  "dlouha": {
+    "code": "dlouha",
+    "text_cz": "Dlouhá",
+    "file": "audio/dlouha.wav",
+    "freq": 380,
+    "beeps": 1
+  },
+  "horizont": {
+    "code": "horizont",
+    "text_cz": "Přes horizont",
+    "file": "audio/horizont.wav",
+    "freq": 620,
+    "beeps": 2
+  },
+  "pozor_horizont": {
+    "code": "pozor_horizont",
+    "text_cz": "Pozor horizont",
+    "file": "audio/pozor_horizont.wav",
+    "freq": 700,
+    "beeps": 3
+  },
+  "do": {
+    "code": "do",
+    "text_cz": "Do",
+    "file": "audio/do.wav",
+    "freq": 420,
+    "beeps": 1
+  },
+  "nebe": {
+    "code": "nebe",
+    "text_cz": "Nebe",
+    "file": "audio/nebe.wav",
+    "freq": 640,
+    "beeps": 2
+  },
+  "brzda": {
+    "code": "brzda",
+    "text_cz": "Brzda!",
+    "file": "audio/brzda.wav",
+    "freq": 750,
+    "beeps": 3
+  },
+  "klouze": {
+    "code": "klouze",
+    "text_cz": "Klouže",
+    "file": "audio/klouze.wav",
+    "freq": 600,
+    "beeps": 2
+  },
+  "nekatovat": {
+    "code": "nekatovat",
+    "text_cz": "Nekatovat",
+    "file": "audio/nekatovat.wav",
+    "freq": 610,
+    "beeps": 2
+  },
+  "katovat": {
+    "code": "katovat",
+    "text_cz": "Katovat",
+    "file": "audio/katovat.wav",
+    "freq": 370,
+    "beeps": 1
+  },
+  "uzke": {
+    "code": "uzke",
+    "text_cz": "Úzké",
+    "file": "audio/uzke.wav",
+    "freq": 560,
+    "beeps": 2
+  },
+  "mostek": {
+    "code": "mostek",
+    "text_cz": "Můstek",
+    "file": "audio/mostek.wav",
+    "freq": 590,
+    "beeps": 2
+  },
+  "skok": {
+    "code": "skok",
+    "text_cz": "Skok",
+    "file": "audio/skok.wav",
+    "freq": 680,
+    "beeps": 2
+  },
+  "dist_30": {
+    "code": "dist_30",
+    "text_cz": "Třicet",
+    "file": "audio/dist_30.wav",
+    "freq": 310,
+    "beeps": 1
+  },
+  "dist_40": {
+    "code": "dist_40",
+    "text_cz": "Čtyřicet",
+    "file": "audio/dist_40.wav",
+    "freq": 310,
+    "beeps": 1
+  },
+  "dist_50": {
+    "code": "dist_50",
+    "text_cz": "Padesát",
+    "file": "audio/dist_50.wav",
+    "freq": 310,
+    "beeps": 1
+  },
+  "dist_60": {
+    "code": "dist_60",
+    "text_cz": "Šedesát",
+    "file": "audio/dist_60.wav",
+    "freq": 310,
+    "beeps": 1
+  },
+  "dist_80": {
+    "code": "dist_80",
+    "text_cz": "Osmdesát",
+    "file": "audio/dist_80.wav",
+    "freq": 310,
+    "beeps": 1
+  },
+  "dist_100": {
+    "code": "dist_100",
+    "text_cz": "Sto",
+    "file": "audio/dist_100.wav",
+    "freq": 300,
+    "beeps": 1
+  },
+  "dist_120": {
+    "code": "dist_120",
+    "text_cz": "Sto dvacet",
+    "file": "audio/dist_120.wav",
+    "freq": 300,
+    "beeps": 1
+  },
+  "dist_150": {
+    "code": "dist_150",
+    "text_cz": "Sto padesát",
+    "file": "audio/dist_150.wav",
+    "freq": 300,
+    "beeps": 1
+  },
+  "dist_200": {
+    "code": "dist_200",
+    "text_cz": "Dvě stě",
+    "file": "audio/dist_200.wav",
+    "freq": 290,
+    "beeps": 1
+  },
+  "dist_250": {
+    "code": "dist_250",
+    "text_cz": "Dvě stě padesát",
+    "file": "audio/dist_250.wav",
+    "freq": 290,
+    "beeps": 1
+  },
+  "dist_300": {
+    "code": "dist_300",
+    "text_cz": "Tři sta",
+    "file": "audio/dist_300.wav",
+    "freq": 280,
+    "beeps": 1
+  },
+  "dist_400": {
+    "code": "dist_400",
+    "text_cz": "Čtyři sta",
+    "file": "audio/dist_400.wav",
+    "freq": 280,
+    "beeps": 1
+  },
+  "dist_500": {
+    "code": "dist_500",
+    "text_cz": "Pět set",
+    "file": "audio/dist_500.wav",
+    "freq": 280,
+    "beeps": 1
+  },
+  "start_54321": {
+    "code": "start_54321",
+    "text_cz": "Pět, čtyři, tři, dva, jedna, start!",
+    "file": "audio/start_54321.wav",
+    "freq": 880,
+    "beeps": 3
+  },
+  "cil": {
+    "code": "cil",
+    "text_cz": "Cíl rychlostní zkoušky",
+    "file": "audio/cil.wav",
+    "freq": 500,
+    "beeps": 2
+  }
+}

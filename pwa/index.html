@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ApexNotes" />
+  <meta name="theme-color" content="#090b10" />
+  <title>ApexNotes – Digitální Rally Navigátor</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- TOP TELEMETRY BAR -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-title">APEX<span>NOTES</span></span>
+        <span id="gpsStatusBadge" class="badge badge-sim">SIMULACE</span>
+      </div>
+      <div class="top-actions">
+        <div id="freemiumPill" class="freemium-pill" title="Klikni pro detail Freemium licence">
+          <span id="freemiumKmText">0.0 / 40 km</span>
+        </div>
+        <button id="btnAudioToggle" class="icon-btn active" aria-label="Zvuk">🔊</button>
+      </div>
+    </header>
+
+    <!-- STAGE SELECTOR & GPX UPLOAD -->
+    <section class="stage-bar">
+      <select id="stageSelect" class="stage-select" aria-label="Výběr rychlostní zkoušky"></select>
+      <label for="gpxFileInput" class="btn-upload" title="Nahrát vlastní GPX trať">
+        + GPX
+        <input type="file" id="gpxFileInput" accept=".gpx" hidden />
+      </label>
+    </section>
+
+    <!-- MAIN HIGH-CONTRAST RALLY PACENOTE HUD -->
+    <main class="hud-grid">
+      <div id="primaryCallCard" class="call-card sev-0">
+        <div class="call-header">
+          <span id="callDistanceCountdown" class="call-countdown">START</span>
+          <span id="callMetaRadius" class="call-radius">R = -- m</span>
+        </div>
+
+        <div class="call-main">
+          <div id="cornerArrowBox" class="corner-arrow">
+            <svg id="cornerSvg" viewBox="0 0 120 120" class="arrow-svg">
+              <path id="cornerArrowPath" d="M60 100 L60 25 M35 50 L60 22 L85 50" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="corner-code-wrap">
+            <div id="cornerShortCode" class="corner-code">READY</div>
+            <div id="cornerModBadges" class="mod-badges"></div>
+          </div>
+        </div>
+
+        <div id="callCzechText" class="call-text-cz">Vyber trať a stiskni START</div>
+
+        <!-- NEXT UPCOMING CALL PREVIEW -->
+        <div class="next-call-strip">
+          <span class="next-label">POTOM:</span>
+          <span id="nextCallCode" class="next-code">--</span>
+          <span id="nextCallText" class="next-text">Čeká na start RZ</span>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE RALLY TRACK MAP & ELEVATION CANVAS -->
+      <div class="map-card">
+        <div class="map-overlay-top">
+          <span>TRAŤ &amp; HORIZONTY</span>
+          <span id="stageProgressText">0.00 / 0.00 km</span>
+        </div>
+        <canvas id="trackCanvas" width="600" height="320"></canvas>
+        <canvas id="elevationCanvas" width="600" height="80"></canvas>
+      </div>
+    </main>
+
+    <!-- TELEMETRY & PREDICTIVE TIMING CONTROLS -->
+    <section class="telemetry-panel">
+      <div class="speed-box">
+        <div id="speedValue" class="speed-val">95</div>
+        <div class="speed-unit">km/h</div>
+      </div>
+
+      <div class="sliders-box">
+        <div class="slider-row">
+          <div class="slider-label">
+            <span>Rychlost jízdy (Simulace / GPS)</span>
+            <strong id="speedSliderLabel">95 km/h</strong>
+          </div>
+          <input type="range" id="speedSlider" min="30" max="180" value="95" step="5" />
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">
+            <span>Dynamický předstih čtení</span>
+            <strong id="leadTimeLabel">3.5 s (92 m)</strong>
+          </div>
+          <input type="range" id="leadTimeSlider" min="2.0" max="5.5" value="3.5" step="0.5" />
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM ACTION CONTROLS -->
+    <footer class="control-bar">
+      <button id="btnStartPause" class="btn-primary">▶ START RZ</button>
+      <button id="btnReset" class="btn-secondary">↺</button>
+      <button id="btnRealGps" class="btn-secondary">📡 GPS</button>
+      <button id="btnTestVoice" class="btn-secondary" title="Otestovat hlas navigátora">🎙️ HLAS</button>
+    </footer>
+  </div>
+
+  <!-- FREEMIUM MODAL (Fáze 4: 40 km limit & 300 Kč plná verze) -->
+  <div id="freemiumModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <h2>🏁 ApexNotes PRO – Plná verze</h2>
+      <p>V bezplatném režimu <strong>Freemium</strong> máš k dispozici <strong>40,0 km</strong> hlasové rally navigace zdarma.</p>
+      <div class="km-meter">
+        <div id="kmMeterFill" class="km-meter-fill"></div>
+      </div>
+      <p id="modalKmDetail" class="modal-km-detail">Odjeto: 0.0 km ze 40.0 km</p>
+      <ul class="pro-perks">
+        <li>✓ Neomezené kilometry a import vlastních GPX tratí</li>
+        <li>✓ Plná česká audio banka a offline režim na iPhonu i Androidu</li>
+        <li>✓ Prediktivní čtení horizontů a utahujících zatáček</li>
+      </ul>
+      <div class="modal-actions">
+        <button id="btnUnlockPro" class="btn-unlock">Odemknout plnou verzi (300 Kč)</button>
+        <button id="btnResetTrial" class="btn-ghost">Resetovat testovací km</button>
+        <button id="btnCloseModal" class="btn-ghost">Zavřít</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data/stages.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
