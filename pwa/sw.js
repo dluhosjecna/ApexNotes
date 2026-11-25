@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apexnotes-pwa-v1';
+const CACHE_NAME = 'apexnotes-pwa-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -6,8 +6,7 @@ const ASSETS = [
   './app.js',
   './manifest.json',
   './icon.svg',
-  './data/stages.js',
-  './audio/audio_bank.json'
+  './data/stages.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -27,6 +26,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+  // Externí API (mapové dlaždice, OSRM, Nominatim) jdou přímo přes síť
+  if (!url.startsWith(self.location.origin)) {
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
