@@ -1,0 +1,31 @@
+Rizika vývoje projektu ApexNotes 
+
+1. Nepřesný výpočet zatáček v algoritmu (Priorita 1 - nejvyšší)
+- Popis: Algoritmus bude ze zašuměných GPX dat špatně určovat ostrost zatáček (stupně 1-6) nebo hlásit falešné zatáčky na rovince.
+- Pravděpodobnost: Vysoká (75 %)
+- Předcházení: Vyhladit trasu pomocí spline filtru (vzorkování po 2,5 m) před samotným výpočtem poloměrů.
+- Řešení: Otestovat skript na 3 známých tratích (např. Barum Rally) a ručně doladit prahové hodnoty poloměrů v kódu.
+
+2. Nemožnost otestovat aplikaci v autě kvůli zimnímu počasí (Priorita 2)
+- Popis: Jízdní testy jsou v harmonogramu v lednu, kdy může být sníh nebo náledí a nepůjde bezpečně jet v rychlejším tempu.
+- Pravděpodobnost: Vysoká (70 %)
+- Předcházení: Udělat v aplikaci testovací simulátor jízdy s posuvníkem rychlosti, aby šlo čtení rozpisu odladit doma u PC.
+- Řešení: Provést reálný test v autě při nízké rychlosti (40-50 km/h) – předstih čtení se počítá podle rychlosti, takže funkčnost se ověří i pomalu.
+
+3. Problém se spuštěním aplikace a zvuku na iPhonu při vývoji na Windows (Priorita 3)
+- Popis: Nemám Mac ani placený Apple Developer účet pro nativní iOS aplikaci a iPhone navíc blokuje automatické přehrávání zvuku.
+- Pravděpodobnost: Střední (55 %)
+- Předcházení: Vytvořit aplikaci jako offline PWA (webovou aplikaci, která se na iPhonu přidá na plochu a běží offline) a zvuk aktivovat kliknutím na tlačítko START.
+- Řešení: Pokud by na mobilu nefungoval systémový český hlas, použít předem připravené WAV/MP3 nahrávky hlášek.
+
+4. Pomalá obnovovací frekvence a zpoždění GPS v mobilu při vývoji telemetrie (Priorita 4)
+- Popis: Běžná GPS v mobilu posílá polohu jen 1x za sekundu (1 Hz) a má odchylku několika metrů, což při vývoji způsobí, že aplikace v rychlosti přečte zatáčku moc pozdě nebo přeskočí bod na trati.
+- Pravděpodobnost: Střední (50 %)
+- Předcházení: Při vývoji nepoužívat jen přesnou bodovou shodu GPS, ale naprogramovat přiřazování k nejbližšímu úseku trati (map-matching) a počítat dynamický předstih čtení podle rychlosti.
+- Řešení: Přidat do aplikace posuvník pro ruční nastavení předstihu (2 až 5,5 sekundy), kterým se dá zpoždění GPS při testování snadno vykompenzovat.
+
+5. Chyby při načítání různých GPX souborů a chybějící nadmořská výška (Priorita 5 - nejnižší)
+- Popis: Stažené GPX trasy z internetu můžou mít jinou strukturu, duplicitní body nebo v nich chybí výšková data pro výpočet horizontů, což shodí skript.
+- Pravděpodobnost: Střední (50 %)
+- Předcházení: Připravit si dopředu vlastní ověřené GPX soubory včetně výškového profilu a filtrovat v kódu duplicitní body.
+- Řešení: Přidat do kódu pojistku (fallback) – když v GPX chybí výška, nastaví se výchozí hodnota a spočítají se aspoň zatáčky bez pádu aplikace.

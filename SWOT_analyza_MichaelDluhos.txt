@@ -1,0 +1,17 @@
+SILNÉ STRÁNKY (Strengths):
+1. Osobní zájem o auta a rally: Rozumím tomu, jak funguje závodní rozpis (stupnice zatáček 1–6, horizonty, utahování), takže vím, co přesně má aplikace dělat a co řidič v autě potřebuje.
+2. Vlastní auto a možnost reálného testování: Mám možnost aplikaci reálně projet a otestovat přímo v autě na okreskách, nejen teoreticky u počítače.
+3. Samostatnost při práci s moderními nástroji: Umím efektivně využívat dokumentaci, Git/GitHub a AI nástroje k rychlejšímu hledání chyb a řešení matematických výpočtů.
+
+SLABÉ STRÁNKY (Weaknesses):
+1. Menší zkušenosti s pokročilou matematikou nad reálnými GPS daty: Výpočty křivosti (Mengerova křivost, spline vyhlazování) a ladění šumu v GPX datech jsou pro mě nové a zaberou mi víc času.
+2. Tendence odkládat teoretickou dokumentaci: Raději programuji a zkouším věci v praxi, než abych psal dlouhé školní dokumentace a tabulky k projektu.
+3. Sklon zasekávat se na detailech: Někdy trávím zbytečně moc času laděním jedné drobnosti (např. vzhledu nebo přesných prahů zatáček) místo posunu k dalšímu úkolu.
+
+PŘÍLEŽITOSTI (Opportunities):
+- Vytvořit projekt, který nejen splní předmět Technický projekt a pomůže u maturitní/závěrečné obhajoby, ale bude i reálně použitelný v praxi a v mém portfoliu na GitHubu.
+- Otestovat aplikaci mezi kamarády a komunitou kolem aut / amatérských závodů a získat od nich zpětnou vazbu.
+
+HROZBY (Threats):
+- Souběh dokončování projektu (leden) s přípravou na maturitu / uzavíráním známek v posledním ročníku školy.
+- Technické limity běžné GPS v telefonu a nepříznivé zimní počasí v lednu při závěrečném testování v autě.

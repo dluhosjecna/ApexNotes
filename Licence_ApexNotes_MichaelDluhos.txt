@@ -1,0 +1,26 @@
+LICENČNÍ UJEDNÁNÍ K APLIKACI APEXNOTES (EULA)
+
+Název produktu: ApexNotes – Digitální rally navigátor
+Autor a poskytovatel licence: Michael Dluhoš
+
+1. Předmět licence
+Tato licence se vztahuje na mobilní a webovou aplikaci ApexNotes, její zdrojový kód, geometrický algoritmus pro výpočet závodního rozpisu z GPX dat, vygenerované rozpisy tratí (pacenotes) a českou zvukovou banku hlášek spolujezdce (dále jen „Produkt“).
+
+2. Rozsah užívání (Freemium a Plná verze)
+Autor uděluje uživateli nevýhradní licenci k osobnímu užívání Produktu:
+- V režimu Freemium má uživatel právo bezplatně využít hlasovou rally navigaci do limitu 40 odjetých kilometrů.
+- Po uhrazení jednorázového licenčního poplatku 300 Kč získává uživatel přístup k plné verzi Produktu bez omezení kilometrů pro své osobní, nekomerční potřeby (trénink, amatérské závody, trackdays).
+
+3. Zákaz přeprodávání a převodu bez souhlasu autora
+Uživatel NESMÍ bez předchozího písemného souhlasu autora (Michaela Dluhoše):
+- přeprodávat, pronajímat, půjčovat ani jinak úplatně či bezúplatně převádět zakoupenou licenci k aplikaci ApexNotes nebo svůj odemčený účet třetí osobě,
+- prodávat nebo komerčně šířit závodní rozpisy (JSON/TXT) a audio nahrávky vygenerované aplikací ApexNotes dalším jezdcům, týmům nebo organizátorům závodů,
+- kopírovat, upravovat nebo vydávat výpočetní algoritmus aplikace za vlastní produkt.
+
+Každý převod nebo přeprodej licence další osobě je platný pouze tehdy, pokud k němu autor udělí výslovný písemný souhlas. Při porušení této podmínky licence automaticky zaniká bez nároku na vrácení licenčního poplatku.
+
+4. Omezení odpovědnosti (Bezpečnost při jízdě)
+Aplikace ApexNotes slouží pouze jako orientační tréninková a navigační pomůcka. Autor nenese žádnou odpovědnost za dopravní nehody, pokuty, škody na vozidle ani újmu na zdraví vzniklou při používání aplikace. Řidič je vždy plně odpovědný za bezpečné řízení vozidla a přizpůsobení jízdy stavu vozovky a pravidlům provozu.
+
+V Praze dne 22. 11. 2026
+Autor: Michael Dluhoš
