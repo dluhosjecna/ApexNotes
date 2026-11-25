@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apexnotes-pwa-v2';
+const CACHE_NAME = 'apexnotes-pwa-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -27,7 +27,6 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-  // Externí API (mapové dlaždice, OSRM, Nominatim) jdou přímo přes síť
   if (!url.startsWith(self.location.origin)) {
     return;
   }

@@ -36,12 +36,12 @@ html, body {
   background: var(--bg-dark);
 }
 
-/* HORNÍ KOMPAKTNÍ POVELOVÁ KARTA (HUD) */
+/* HORNÍ POVELOVÁ KARTA */
 .hud-banner {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: calc(env(safe-area-inset-top, 6px) + 8px) 12px 10px;
+  flex-direction: column;
+  gap: 6px;
+  padding: calc(env(safe-area-inset-top, 6px) + 8px) 12px 8px;
   background: #141a26;
   border-bottom: 3px solid var(--border);
   z-index: 10;
@@ -54,17 +54,23 @@ html, body {
 .hud-banner.sev-4 { border-bottom-color: #c6ff00; }
 .hud-banner.sev-5, .hud-banner.sev-6 { border-bottom-color: #00e676; }
 
+.hud-main-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .hud-arrow-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 68px;
+  min-width: 66px;
 }
 
 .arrow-svg {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   color: var(--yellow);
 }
 
@@ -74,7 +80,7 @@ html, body {
 .hud-banner.sev-5 .arrow-svg, .hud-banner.sev-6 .arrow-svg { color: #00e676; }
 
 .hud-code {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 900;
   line-height: 1;
   margin-top: 2px;
@@ -95,7 +101,7 @@ html, body {
 }
 
 .hud-dist {
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 900;
   color: var(--yellow);
 }
@@ -119,6 +125,12 @@ html, body {
   border: 1px solid var(--green);
 }
 
+.badge-wait {
+  background: rgba(255, 123, 0, 0.2);
+  color: var(--orange);
+  border: 1px solid var(--orange);
+}
+
 .hud-call-text {
   font-size: 1.25rem;
   font-weight: 900;
@@ -128,36 +140,21 @@ html, body {
   text-overflow: ellipsis;
 }
 
-.hud-sub-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-}
-
 .mod-badges {
   display: flex;
   gap: 4px;
+  min-height: 16px;
 }
 
 .mod-tag {
   font-size: 0.65rem;
   font-weight: 900;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 4px;
 }
 .mod-tag.danger { background: var(--red); color: #fff; }
 .mod-tag.warn { background: var(--yellow); color: #000; }
 .mod-tag.info { background: var(--cyan); color: #000; }
-
-.next-summary {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 700;
-}
 
 .hud-audio-btn {
   background: rgba(255, 255, 255, 0.08);
@@ -170,19 +167,91 @@ html, body {
   cursor: pointer;
 }
 
-/* VELKÁ NAVIGAČNÍ MAPA */
+/* NADCHÁZEJÍCÍ POKYN + O 1 NAPŘED */
+.hud-upcoming-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.34);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.upcoming-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.up-tag {
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 208, 0, 0.2);
+  color: var(--yellow);
+  min-width: 48px;
+  text-align: center;
+}
+
+.up-tag.muted {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--muted);
+}
+
+.up-code {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #fff;
+  min-width: 30px;
+}
+
+.up-code.muted {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.up-text {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.up-text.muted {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* VELKÁ NAVIGAČNÍ MAPA (2 PŘEKRYTÉ CANVASY) */
 .map-viewport {
   position: relative;
   flex: 1;
   min-height: 0;
-  background: #0c1017;
+  background: #141923;
   overflow: hidden;
 }
 
-#trackCanvas {
+.map-layer-bg,
+.map-layer-fg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* Tmavý navigační režim pro OpenStreetMap dlaždice (100% bez API klíče, funguje i na iPhone Safari) */
+.map-layer-bg {
+  filter: invert(93%) hue-rotate(180deg) brightness(92%) contrast(94%) saturate(80%);
+}
+
+.map-layer-fg {
+  pointer-events: none;
 }
 
 .map-hud-top {
@@ -195,10 +264,11 @@ html, body {
   align-items: center;
   gap: 8px;
   pointer-events: none;
+  z-index: 4;
 }
 
 .route-name-pill {
-  background: rgba(15, 20, 30, 0.85);
+  background: rgba(15, 20, 30, 0.88);
   backdrop-filter: blur(6px);
   border: 1px solid var(--border);
   padding: 5px 10px;
@@ -214,7 +284,7 @@ html, body {
 
 .freemium-pill {
   pointer-events: auto;
-  background: rgba(15, 20, 30, 0.85);
+  background: rgba(15, 20, 30, 0.88);
   border: 1px solid #384666;
   padding: 5px 10px;
   border-radius: 20px;
@@ -237,6 +307,7 @@ html, body {
   align-items: flex-end;
   gap: 8px;
   pointer-events: none;
+  z-index: 4;
 }
 
 .speed-pill {
@@ -280,6 +351,7 @@ html, body {
   padding: 10px 12px calc(env(safe-area-inset-bottom, 6px) + 10px);
   background: var(--bg-panel);
   border-top: 1px solid var(--border);
+  z-index: 10;
 }
 
 .btn-route {
@@ -315,14 +387,9 @@ html, body {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 12px;
-  width: 48px;
-  font-size: 1.15rem;
+  width: 50px;
+  font-size: 1.2rem;
   cursor: pointer;
-}
-
-.btn-icon.active-gps {
-  border-color: var(--green);
-  background: rgba(0, 230, 118, 0.15);
 }
 
 /* MODALY */
@@ -349,6 +416,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 90dvh;
+  overflow-y: auto;
 }
 
 .modal-head {
@@ -381,6 +450,10 @@ html, body {
   text-transform: uppercase;
 }
 
+.autocomplete-wrap {
+  position: relative;
+}
+
 .input-row {
   display: flex;
   gap: 6px;
@@ -394,6 +467,49 @@ html, body {
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.92rem;
+}
+
+.text-input.full-width {
+  width: 100%;
+}
+
+.suggestions-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #0f1522;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 70;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+}
+
+.suggestions-list.hidden { display: none; }
+
+.suggestion-item {
+  padding: 9px 12px;
+  border-bottom: 1px solid #1e293b;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover, .suggestion-item:active { background: #1e293b; }
+
+.sugg-main {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sugg-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 
 .btn-mini {
@@ -456,11 +572,43 @@ html, body {
   cursor: pointer;
 }
 
+/* PŘEPÍNAČ REŽIMU GPS / DEMO */
+.mode-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  background: #0b0f17;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: rgba(0, 230, 118, 0.16);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.mode-btn.active.demo-active {
+  background: rgba(255, 208, 0, 0.16);
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+
 .setting-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+
+.setting-item.hidden { display: none; }
 
 .setting-label {
   display: flex;
