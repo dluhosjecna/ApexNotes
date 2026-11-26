@@ -245,24 +245,66 @@ def compute_menger_curvature_and_elevation(pts: List[Dict[str, float]], window_o
     return pts
 
 
-def radius_to_czech_severity(r: float) -> int:
+def compute_turn_angle_deg(c_pts: List[Dict[str, float]]) -> float:
     """
-    Převede minimální poloměr zatáčky R (v metrech) na českou rally stupnici 1–6:
-    1 = nejostřejší (vracák), 6 = nejrychlejší, 0 = rovinka.
+    Spočítá celkový úhel zatočení zatáčky ve stupních jako absolutní součet
+    změn směrového úhlu (azimutu) mezi po sobě jdoucími segmenty v zatáčce.
     """
-    if r < 22.0:
-        return 1
-    elif r < 38.0:
-        return 2
-    elif r < 62.0:
-        return 3
-    elif r < 98.0:
-        return 4
-    elif r < 155.0:
-        return 5
-    elif r <= 240.0:
-        return 6
-    return 0
+    if len(c_pts) < 3:
+        return 0.0
+    total_rad = 0.0
+    for i in range(1, len(c_pts) - 1):
+        v1x = c_pts[i]["x"] - c_pts[i - 1]["x"]
+        v1y = c_pts[i]["y"] - c_pts[i - 1]["y"]
+        v2x = c_pts[i + 1]["x"] - c_pts[i]["x"]
+        v2y = c_pts[i + 1]["y"] - c_pts[i]["y"]
+        cross = v1x * v2y - v1y * v2x
+        dot = v1x * v2x + v1y * v2y
+        if (v1x * v1x + v1y * v1y) > 1e-6 and (v2x * v2x + v2y * v2y) > 1e-6:
+            total_rad += math.atan2(cross, dot)
+    return abs(math.degrees(total_rad))
+
+
+def radius_to_czech_severity(r: float, turn_angle_deg: float = 90.0) -> Tuple[int, bool]:
+    """
+    Převede efektivní poloměr zatáčky R (v metrech) a celkový úhel zatočení
+    na českou rally stupnici 1–6 a příznak vracáku (is_hairpin):
+    - Vracák (stupeň 1 + hairpin): pouze když se silnice vrací zpět (>= 130°) a R < 32 m.
+    - Běžná 90° zatáčka (75°–125°): stupeň 2 (nikoliv vracák!).
+    - Malé úhly zatočení (< 45°) nemohou být ostré stupně 1–2.
+    """
+    if r > 245.0 or turn_angle_deg < 14.0:
+        return 0, False
+
+    # Skutečný vracák (hairpin) = silnice se otáčí o >= 130° zpět
+    if turn_angle_deg >= 130.0 and r < 34.0:
+        return 1, True
+
+    # Velmi ostrá zatáčka nad 118° s malým poloměrem (stupeň 1, ale ne vracák)
+    if turn_angle_deg >= 118.0 and r < 18.0:
+        return 1, False
+
+    # Základní klasifikace podle poloměru (90° křižovatky/zatáčky spadnou do stupně 2)
+    if r < 40.0:
+        sev = 2
+    elif r < 70.0:
+        sev = 3
+    elif r < 110.0:
+        sev = 4
+    elif r < 170.0:
+        sev = 5
+    else:
+        sev = 6
+
+    # Korekce podle celkového úhlu zatočení (krátký mělký zlom není ostrá zatáčka)
+    if turn_angle_deg < 28.0:
+        sev = max(sev, 5)
+    elif turn_angle_deg < 48.0:
+        sev = max(sev, 4)
+    elif turn_angle_deg < 70.0:
+        sev = max(sev, 3)
+
+    return sev, False
 
 
 SEVERITY_WORDS_CZ = {
@@ -342,34 +384,40 @@ def extract_pacenotes(pts: List[Dict[str, float]]) -> List[Dict[str, Any]]:
         end_s = c_pts[-1]["s"]
         length_m = end_s - start_s
 
-        # Apex (bod s nejmenším poloměrem)
+        # Apex (bod s nejmenším poloměrem) a robustní efektivní poloměr (25. percentil)
         apex_pt = min(c_pts, key=lambda p: p["radius"])
-        min_r = apex_pt["radius"]
-        severity = radius_to_czech_severity(min_r)
+        sorted_r = sorted(p["radius"] for p in c_pts)
+        eff_r = sorted_r[max(0, int(len(sorted_r) * 0.25))]
+        turn_angle_deg = compute_turn_angle_deg(c_pts)
+
+        severity, is_hairpin = radius_to_czech_severity(eff_r, turn_angle_deg)
         if severity == 0:
             continue
 
         # Detekce utahování / otevírání (porovnání 1. a 2. poloviny zatáčky)
         half = max(1, len(c_pts) // 2)
-        r_first = min(p["radius"] for p in c_pts[:half])
-        r_second = min(p["radius"] for p in c_pts[half:])
-        sev_first = radius_to_czech_severity(r_first) or severity
-        sev_second = radius_to_czech_severity(r_second) or severity
+        r_first = sorted(p["radius"] for p in c_pts[:half])[max(0, int(half * 0.3))]
+        r_second = sorted(p["radius"] for p in c_pts[half:])[max(0, int((len(c_pts) - half) * 0.3))]
+        ang_first = compute_turn_angle_deg(c_pts[:half + 1])
+        ang_second = compute_turn_angle_deg(c_pts[half:])
+        sev_first, _ = radius_to_czech_severity(r_first, max(ang_first, turn_angle_deg * 0.6))
+        sev_second, _ = radius_to_czech_severity(r_second, max(ang_second, turn_angle_deg * 0.6))
+        sev_first = sev_first or severity
+        sev_second = sev_second or severity
 
         modifier = ""
         sub_call = ""
-        if length_m >= 30.0 and sev_second < sev_first and (sev_first - sev_second) >= 1:
+        if not is_hairpin and length_m >= 32.0 and sev_second < sev_first and (sev_first - sev_second) >= 1:
             # Druhá polovina je ostřejší -> zatáčka utahuje!
             severity = sev_first
             modifier = "utahuje"
             if sev_first - sev_second >= 2:
                 sub_call = f"do {SEVERITY_WORDS_CZ[sev_second]}"
-        elif length_m >= 35.0 and sev_second > sev_first and (sev_second - sev_first) >= 1:
+        elif not is_hairpin and length_m >= 38.0 and sev_second > sev_first and (sev_second - sev_first) >= 1:
             severity = sev_first
             modifier = "otevírá"
 
-        is_long = length_m >= 65.0
-        is_hairpin = severity == 1 and length_m >= 22.0
+        is_long = length_m >= 70.0 and not is_hairpin
 
         # Detekce horizontu nebo klesání/stoupání v zatáčce
         min_grade_change = min(p["grade_change"] for p in c_pts)
@@ -445,7 +493,8 @@ def extract_pacenotes(pts: List[Dict[str, float]]) -> List[Dict[str, Any]]:
             "apex_distance_m": round(apex_pt["s"], 1),
             "end_distance_m": round(end_s, 1),
             "length_m": round(length_m, 1),
-            "radius_m": round(min_r, 1),
+            "radius_m": round(eff_r, 1),
+            "turn_angle_deg": round(turn_angle_deg, 1),
             "grade_pct": apex_pt["grade_pct"],
             "lat": round(apex_pt["lat"], 6),
             "lon": round(apex_pt["lon"], 6),
@@ -485,11 +534,13 @@ def analyze_gpx_file(filepath: str) -> Dict[str, Any]:
     ]
 
     stage_id = os.path.splitext(os.path.basename(filepath))[0]
+    est_duration_sec = round((total_length_m / 1000.0) / 65.0 * 3600.0)
     return {
         "id": stage_id,
         "name": track_name,
         "total_length_m": round(total_length_m, 1),
         "total_length_km": round(total_length_m / 1000.0, 2),
+        "duration_sec": est_duration_sec,
         "min_ele_m": round(min(elevations), 1),
         "max_ele_m": round(max(elevations), 1),
         "corners_count": sum(1 for n in pacenotes if n["type"] == "corner"),

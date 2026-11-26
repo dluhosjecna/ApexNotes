@@ -227,13 +227,19 @@ html, body {
   color: var(--muted);
 }
 
-/* VELKÁ NAVIGAČNÍ MAPA (2 PŘEKRYTÉ CANVASY) */
+/* INTERAKTIVNÍ NAVIGAČNÍ MAPA */
 .map-viewport {
   position: relative;
   flex: 1;
   min-height: 0;
   background: #141923;
   overflow: hidden;
+  touch-action: none; /* Povolí vlastní 1-prst pan a 2-prst pinch-zoom bez scrollu stránky */
+  cursor: grab;
+}
+
+.map-viewport:active {
+  cursor: grabbing;
 }
 
 .map-layer-bg,
@@ -245,7 +251,6 @@ html, body {
   display: block;
 }
 
-/* Tmavý navigační režim pro OpenStreetMap dlaždice (100% bez API klíče, funguje i na iPhone Safari) */
 .map-layer-bg {
   filter: invert(93%) hue-rotate(180deg) brightness(92%) contrast(94%) saturate(80%);
 }
@@ -311,7 +316,7 @@ html, body {
 }
 
 .speed-pill {
-  background: rgba(12, 16, 24, 0.9);
+  background: rgba(12, 16, 24, 0.92);
   border: 2px solid #334155;
   border-radius: 14px;
   padding: 6px 12px;
@@ -334,14 +339,45 @@ html, body {
   color: var(--muted);
 }
 
-.dist-pill {
-  background: rgba(12, 16, 24, 0.88);
+.trip-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dist-pill, .eta-pill {
+  background: rgba(12, 16, 24, 0.9);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 0.82rem;
+  border-radius: 9px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
   font-weight: 800;
   color: var(--text);
+}
+
+.eta-pill {
+  color: var(--yellow);
+}
+
+/* TLAČÍTKO RE-CENTER (VIDITELNÉ JEN KDYŽ MAPA NENÍ VYCENTROVANÁ) */
+.btn-recenter {
+  position: absolute;
+  bottom: 14px;
+  right: 12px;
+  z-index: 6;
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--cyan);
+  border: 2px solid var(--cyan);
+  border-radius: 24px;
+  padding: 9px 14px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+.btn-recenter.hidden {
+  display: none;
 }
 
 /* SPODNÍ LIŠTA */
@@ -444,7 +480,7 @@ html, body {
 }
 
 .field-label {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--muted);
   text-transform: uppercase;
@@ -466,12 +502,10 @@ html, body {
   color: #fff;
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
-.text-input.full-width {
-  width: 100%;
-}
+.text-input.full-width { width: 100%; }
 
 .suggestions-list {
   position: absolute;
@@ -481,36 +515,75 @@ html, body {
   background: #0f1522;
   border: 1px solid #475569;
   border-radius: 10px;
-  max-height: 200px;
+  max-height: 210px;
   overflow-y: auto;
   z-index: 70;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
 }
 
 .suggestions-list.hidden { display: none; }
+
+.sugg-header {
+  padding: 6px 12px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  background: #0a0e17;
+  border-bottom: 1px solid #1e293b;
+}
 
 .suggestion-item {
   padding: 9px 12px;
   border-bottom: 1px solid #1e293b;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
 }
 
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover, .suggestion-item:active { background: #1e293b; }
 
+.sugg-icon { font-size: 0.95rem; }
+
+.sugg-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
 .sugg-main {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sugg-sub {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.route-preview {
+  display: flex;
+  justify-content: space-around;
+  background: #0b111e;
+  border: 1px solid #2b3a55;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--cyan);
+}
+
+.route-preview.hidden { display: none; }
 
 .btn-mini {
   background: #1e293b;
@@ -533,11 +606,11 @@ html, body {
   font-size: 0.95rem;
   font-weight: 900;
   cursor: pointer;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .status-msg {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--cyan);
   min-height: 16px;
 }

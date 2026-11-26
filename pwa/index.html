@@ -30,7 +30,7 @@
             <span id="callDistanceCountdown" class="hud-dist">VYBER TRASU</span>
             <span id="gpsStatusBadge" class="badge badge-gps">GPS</span>
           </div>
-          <div id="callCzechText" class="hud-call-text">Zvol Start a Cíl nebo RZ</div>
+          <div id="callCzechText" class="hud-call-text">Zvol Cíl nebo RZ</div>
           <div id="cornerModBadges" class="mod-badges"></div>
         </div>
 
@@ -52,8 +52,8 @@
       </div>
     </header>
 
-    <!-- HLAVNÍ PLOCHA: VELKÁ OTÁČEJÍCÍ SE NAVIGAČNÍ MAPA (2 VRSTVY) -->
-    <main class="map-viewport">
+    <!-- HLAVNÍ PLOCHA: INTERAKTIVNÍ OTÁČEJÍCÍ SE MAPA (PAN + PINCH ZOOM + RE-CENTER) -->
+    <main id="mapViewport" class="map-viewport">
       <canvas id="mapBgCanvas" class="map-layer-bg"></canvas>
       <canvas id="trackCanvas" class="map-layer-fg"></canvas>
 
@@ -63,17 +63,25 @@
         <button id="freemiumPill" class="freemium-pill">0.0 / 40 km</button>
       </div>
 
-      <!-- Plovoucí rychlost a vzdálenost -->
+      <!-- Plovoucí rychlost, vzdálenost a zbývající čas -->
       <div class="map-hud-bottom-left">
         <div class="speed-pill">
           <span id="speedValue" class="speed-num">0</span>
           <span class="speed-unit">km/h</span>
         </div>
-        <div id="stageProgressText" class="dist-pill">0.0 / 0.0 km</div>
+        <div class="trip-pills">
+          <div id="stageProgressText" class="dist-pill">0.0 / 0.0 km</div>
+          <div id="stageEtaText" class="eta-pill">⏱️ -- min</div>
+        </div>
       </div>
+
+      <!-- Plovoucí tlačítko RE-CENTER (viditelné JEN když mapa není vycentrovaná na šipku) -->
+      <button id="btnRecenter" class="btn-recenter hidden" title="Vycentrovat zpět na šipku">
+        🎯 Vycentrovat
+      </button>
     </main>
 
-    <!-- JEDNODUCHÁ SPODNÍ LIŠTA (3 TLAČÍTKA) -->
+    <!-- JEDNODUCHÁ SPODNÍ LIŠTA -->
     <footer class="bottom-bar">
       <button id="btnOpenRoute" class="btn-route" title="Zadat Start a Cíl">🗺️ Trasa</button>
       <button id="btnStartPause" class="btn-start">▶ START</button>
@@ -81,7 +89,7 @@
     </footer>
   </div>
 
-  <!-- MODAL: VÝBĚR TRASY (START -> CÍL S NAŠEPTÁVAČEM / RZ / GPX) -->
+  <!-- MODAL: VÝBĚR TRASY (START -> CÍL + HISTORIE + VÝPOČET ČASU) -->
   <div id="routeModal" class="modal-backdrop hidden">
     <div class="modal-box">
       <div class="modal-head">
@@ -90,10 +98,10 @@
       </div>
 
       <div class="route-form">
-        <label class="field-label">Start</label>
+        <label class="field-label">Start (výchozí: tvoje GPS poloha)</label>
         <div class="autocomplete-wrap">
           <div class="input-row">
-            <input type="text" id="inputStart" class="text-input" placeholder="Začni psát město nebo ulici (např. Zlín)..." autocomplete="off" />
+            <input type="text" id="inputStart" class="text-input" placeholder="📍 Moje aktuální poloha (nebo napiš místo)..." autocomplete="off" />
             <button id="btnUseMyLocation" class="btn-mini" title="Použít aktuální GPS polohu">📍 GPS</button>
           </div>
           <div id="startSuggestions" class="suggestions-list hidden"></div>
@@ -101,11 +109,18 @@
 
         <label class="field-label">Cíl</label>
         <div class="autocomplete-wrap">
-          <input type="text" id="inputEnd" class="text-input full-width" placeholder="Začni psát cíl (např. Provodov)..." autocomplete="off" />
+          <input type="text" id="inputEnd" class="text-input full-width" placeholder="Rozklikni historii nebo začni psát (např. zli)..." autocomplete="off" />
           <div id="endSuggestions" class="suggestions-list hidden"></div>
         </div>
 
-        <button id="btnCalculateRoute" class="btn-calc">🧭 Spočítat trasu a rozpis</button>
+        <!-- ŽIVÝ NÁHLED DÉLKY A ČASU TRASY (Z OSRM API) -->
+        <div id="routePreviewCard" class="route-preview hidden">
+          <span id="previewDist">📏 -- km</span>
+          <span id="previewTime">⏱️ -- min</span>
+          <span id="previewCorners">↩️ -- zat.</span>
+        </div>
+
+        <button id="btnCalculateRoute" class="btn-calc">🧭 Nastavit trasu a rozpis</button>
         <div id="routeSearchStatus" class="status-msg"></div>
       </div>
 
@@ -158,6 +173,7 @@
       </div>
 
       <div class="modal-row-actions">
+        <button id="btnEnableCompass" class="btn-ghost">🧭 Povolit kompas telefonu (iPhone)</button>
         <button id="btnReset" class="btn-ghost">↺ Resetovat trasu na start</button>
         <button id="btnTestVoice" class="btn-ghost">🎙️ Otestovat hlas spolujezdce</button>
       </div>
