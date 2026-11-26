@@ -1,11 +1,11 @@
 /**
- * ApexNotes – Rally Navigace (PWA v4)
- * - Volný pohyb mapy (pan) + 2-prstý pinch-zoom / kolečko myši + tlačítko Re-center (jen když odcentrováno)
- * - Otáčení šipky i mapy podle orientace/kompasu mobilu (iPhone webkitCompassHeading / Android deviceorientation)
- * - Výpočet času trasy z OSRM API (náhled při výběru + zbývající čas na mapě)
- * - Automatické nastavení aktuální GPS polohy uživatele jako Start při spuštění trasy
- * - Historie nedávných míst v našeptávači hned po rozkliknutí inputu + živý Photon autocomplete
- * - Opravený výpočet zatáček (převzorkování po 4 m + celkový úhel zatočení -> 90° je stupeň 2, vracák až od 130°+)
+ * ApexNotes – Rally Navigace (PWA v5)
+ * - Rychlé 60fps vykreslování i pro velmi dlouhé trasy (předpočítaný Mercator, viewport culling, LOD, color batching, rAF throttling)
+ * - Plný freelook mapy: 1-prst pan, 2-prst pinch-zoom + 2-prst otáčení mapy (na PC pravé tlačítko / Shift+tah pro otáčení) + Re-center
+ * - Okamžité smazání textu po kliknutí do inputu Start / Cíl + okamžité zobrazení historie míst
+ * - Otáčení šipky i mapy podle kompasu mobilu (iOS webkitCompassHeading / Android deviceorientation)
+ * - Výpočet času trasy z OSRM + automatický Start z aktuální GPS polohy
+ * - Opravený algoritmus zatáček (90° = stupeň 2, vracák až od 130°+)
  */
 
 (function () {
@@ -14,7 +14,7 @@
   const FREE_KM_LIMIT = 40.0;
   const EARTH_R = 6371000.0;
   const TILE_SIZE = 256;
-  const MIN_ZOOM = 12.0;
+  const MIN_ZOOM = 10.5;
   const MAX_ZOOM = 18.5;
   const HISTORY_KEY = 'apexnotes_place_history';
   const STRAIGHT_MILESTONES = [1000, 800, 600, 500, 400, 300, 200, 150, 100];
@@ -23,12 +23,13 @@
     stages: window.APEXNOTES_STAGES || [],
     currentStage: null,
     corners: [],
-    demoMode: false,           // Výchozí = Reálná GPS
+    demoMode: false,
     isRunning: false,
     gpsWatchId: null,
     gpsHasFix: false,
-    liveGpsPos: null,          // { lat, lon, heading }
-    deviceHeadingRad: null,    // Kompas telefonu (0 = Sever, +PI/2 = Východ)
+    liveGpsPos: null,
+    lastMatchedIdx: 0,
+    deviceHeadingRad: null,
     compassListening: false,
     // Kamera & interaktivní mapa
     mapZoom: 16.0,
@@ -36,6 +37,7 @@
     cameraLat: 49.2163,
     cameraLon: 17.7492,
     cameraRotationRad: 0.0,
+    redrawScheduled: false,
     // Audio & telemetrie
     audioEnabled: true,
     distanceM: 0.0,
@@ -44,9 +46,9 @@
     leadTimeSec: 5.0,
     routeHeadingRad: 0.0,
     // Výběr Start -> Cíl & historie
-    selectedStart: null,       // { lat, lon, label, isGps?: true }
-    selectedEnd: null,         // { lat, lon, label }
-    previewRouteData: null,    // Cache předpočítané OSRM trasy pro náhled
+    selectedStart: null,
+    selectedEnd: null,
+    previewRouteData: null,
     placeHistory: loadPlaceHistory(),
     // Hlášky
     spokenCornerIds: new Set(),
@@ -132,8 +134,28 @@
   }
 
   // =========================================================================
-  // 1. HISTORIE MÍST (localStorage)
+  // 1. MERCATOR PŘEDVÝPOČET & HISTORIE MÍST
   // =========================================================================
+  function latLonToNormMercator(lat, lon) {
+    const mx = (lon + 180) / 360;
+    const sinLat = Math.sin((lat * Math.PI) / 180);
+    const my = 0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI);
+    return [mx, my];
+  }
+
+  function precomputeStageMercator(stage) {
+    if (!stage || !stage.geometry || stage._mercatorReady) return;
+    const geom = stage.geometry;
+    for (let i = 0; i < geom.length; i++) {
+      const p = geom[i];
+      const [mx, my] = latLonToNormMercator(p.lat, p.lon);
+      p.mx = mx;
+      p.my = my;
+      p.colorBucket = p.r < 40 ? 1 : p.r < 95 ? 2 : 3;
+    }
+    stage._mercatorReady = true;
+  }
+
   function loadPlaceHistory() {
     try {
       const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
@@ -154,15 +176,22 @@
   }
 
   // =========================================================================
-  // 2. KOMPAS MOBILU (OTÁČENÍ ŠIPKY A MAPY PODLE TELEFONU – iOS & ANDROID)
+  // 2. KOMPAS MOBILU (OTÁČENÍ ŠIPKY A MAPY PODLE TELEFONU)
   // =========================================================================
+  function scheduleMapRedraw() {
+    if (state.redrawScheduled) return;
+    state.redrawScheduled = true;
+    requestAnimationFrame(() => {
+      state.redrawScheduled = false;
+      drawInteractiveMap();
+    });
+  }
+
   function handleOrientationEvent(e) {
     let headingDeg = null;
     if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) {
-      // iPhone / iOS Safari – přesný kompasový azimut (0 = Sever)
       headingDeg = e.webkitCompassHeading;
     } else if (typeof e.alpha === 'number' && !isNaN(e.alpha)) {
-      // Android / standardní prohlížeč
       headingDeg = (360 - e.alpha) % 360;
     }
     if (headingDeg === null) return;
@@ -171,13 +200,13 @@
     if (state.deviceHeadingRad === null) {
       state.deviceHeadingRad = targetRad;
     } else {
-      // Plynulé vyhlazení kompasu, aby šipka netřepala
       let diff = targetRad - state.deviceHeadingRad;
       while (diff > Math.PI) diff -= 2 * Math.PI;
       while (diff < -Math.PI) diff += 2 * Math.PI;
+      if (Math.abs(diff) < 0.004) return; // Zbytečně nepřekreslujeme mikro-šum
       state.deviceHeadingRad += diff * 0.25;
     }
-    if (!state.isRunning) drawInteractiveMap();
+    scheduleMapRedraw();
   }
 
   function attachCompassListeners() {
@@ -198,9 +227,7 @@
       } else {
         attachCompassListeners();
       }
-    } catch (_) {
-      // Uživatel odmítl nebo prohlížeč nevyžaduje permission
-    }
+    } catch (_) {}
   }
 
   // =========================================================================
@@ -317,7 +344,7 @@
   }
 
   // =========================================================================
-  // 5. OPRAVENÝ GEOMETRICKÝ ALGORITMUS V JS (90° ZATÁČKA NENÍ VRACÁK!)
+  // 5. OPTIMALIZOVANÝ GEOMETRICKÝ ALGORITMUS V JS (RYCHLÝ I PRO 200+ KM)
   // =========================================================================
   function computeTurnAngleDeg(cPts) {
     if (cPts.length < 3) return 0;
@@ -336,12 +363,9 @@
 
   function classifyCorner(effR, turnAngleDeg) {
     if (effR > 245 || turnAngleDeg < 14) return { sev: 0, isHairpin: false };
-    // Skutečný vracák = obrat o >= 130° zpět s malým poloměrem
     if (turnAngleDeg >= 130 && effR < 34) return { sev: 1, isHairpin: true };
-    // Velmi ostrá nad 118° bez vracáku
     if (turnAngleDeg >= 118 && effR < 18) return { sev: 1, isHairpin: false };
 
-    // Běžná 90° zatáčka (70°–125°) spadne do stupně 2 (Pravá dva / Levá dva), NIKOLIV vracák!
     let sev = effR < 40 ? 2 : effR < 70 ? 3 : effR < 110 ? 4 : effR < 170 ? 5 : 6;
     if (turnAngleDeg < 28) sev = Math.max(sev, 5);
     else if (turnAngleDeg < 48) sev = Math.max(sev, 4);
@@ -355,17 +379,26 @@
     const lon0 = (rawLatLonEle[0].lon * Math.PI) / 180;
     const cosLat0 = Math.cos(lat0);
 
-    // 1. Převod do lokálních metrů
+    // 1. Převod do lokálních metrů a výpočet celkové délky
     const local = [];
-    for (const p of rawLatLonEle) {
+    let approxTotalLen = 0;
+    for (let i = 0; i < rawLatLonEle.length; i++) {
+      const p = rawLatLonEle[i];
       const x = (((p.lon * Math.PI) / 180) - lon0) * cosLat0 * EARTH_R;
       const y = (((p.lat * Math.PI) / 180) - lat0) * EARTH_R;
-      if (local.length && Math.hypot(x - local[local.length - 1].x, y - local[local.length - 1].y) < 0.5) continue;
+      if (local.length) {
+        const d = Math.hypot(x - local[local.length - 1].x, y - local[local.length - 1].y);
+        if (d < 0.8) continue;
+        approxTotalLen += d;
+      }
       local.push({ lat: p.lat, lon: p.lon, ele: p.ele || 300, x, y });
     }
 
-    // 2. Rovnoměrné převzorkování po 4 metrech (eliminuje špičaté uzly OSRM na 90° křižovatkách)
-    const stepM = 4.0;
+    // Adaptivní vzorkování, aby ani 200km trasa nezasekla telefon
+    const stepM = approxTotalLen > 80000 ? 10.0 : approxTotalLen > 25000 ? 6.0 : 4.0;
+    const wOff = approxTotalLen > 80000 ? 2 : 3;
+
+    // 2. Rovnoměrné převzorkování
     const resampled = [{ ...local[0], s: 0 }];
     let accum = 0;
     let nextTarget = stepM;
@@ -390,24 +423,22 @@
       accum += d;
     }
 
-    // 3. Gaussovské vyhlazení
-    const weights = [0.1, 0.2, 0.4, 0.2, 0.1];
-    const pts = resampled.map((pt, i) => {
-      let sx = 0, sy = 0, slat = 0, slon = 0;
-      for (let k = -2; k <= 2; k++) {
-        const idx = Math.min(resampled.length - 1, Math.max(0, i + k));
-        const w = weights[k + 2];
-        sx += resampled[idx].x * w;
-        sy += resampled[idx].y * w;
-        slat += resampled[idx].lat * w;
-        slon += resampled[idx].lon * w;
-      }
-      return { lat: slat, lon: slon, ele: pt.ele, x: sx, y: sy, s: pt.s, r: 999, dir: 'S' };
-    });
+    // 3. Lehké vyhlazení + přímý předvýpočet Mercator souřadnic
+    const nPts = resampled.length;
+    const pts = new Array(nPts);
+    for (let i = 0; i < nPts; i++) {
+      const i0 = Math.max(0, i - 1);
+      const i2 = Math.min(nPts - 1, i + 1);
+      const sx = 0.25 * resampled[i0].x + 0.5 * resampled[i].x + 0.25 * resampled[i2].x;
+      const sy = 0.25 * resampled[i0].y + 0.5 * resampled[i].y + 0.25 * resampled[i2].y;
+      const slat = 0.25 * resampled[i0].lat + 0.5 * resampled[i].lat + 0.25 * resampled[i2].lat;
+      const slon = 0.25 * resampled[i0].lon + 0.5 * resampled[i].lon + 0.25 * resampled[i2].lon;
+      const [mx, my] = latLonToNormMercator(slat, slon);
+      pts[i] = { lat: slat, lon: slon, mx, my, x: sx, y: sy, s: resampled[i].s, r: 999, dir: 'S', colorBucket: 3 };
+    }
 
-    // 4. Mengerova křivost přes okno w=3 (~12 m na každou stranu)
-    const wOff = 3;
-    for (let i = wOff; i < pts.length - wOff; i++) {
+    // 4. Mengerova křivost
+    for (let i = wOff; i < nPts - wOff; i++) {
       const p1 = pts[i - wOff], p2 = pts[i], p3 = pts[i + wOff];
       const v1x = p2.x - p1.x, v1y = p2.y - p1.y;
       const v2x = p3.x - p2.x, v2y = p3.y - p2.y;
@@ -415,23 +446,25 @@
       const cross = v1x * v2y - v1y * v2x;
       if (a * b * c > 1e-3 && Math.abs(cross) > 1e-3) {
         const kappa = (2 * Math.abs(cross)) / (a * b * c);
-        p2.r = Math.min(999, Math.round((1 / kappa) * 10) / 10);
+        const r = Math.min(999, Math.round((1 / kappa) * 10) / 10);
+        p2.r = r;
         p2.dir = cross > 0 ? 'L' : 'P';
+        p2.colorBucket = r < 40 ? 1 : r < 95 ? 2 : 3;
       }
     }
 
-    // 5. Extrakce a sloučení zatáček + klasifikace pomocí (effR + turnAngleDeg)
+    // 5. Extrakce zatáček
     const rawCorners = [];
     let i = wOff;
-    while (i < pts.length - wOff) {
+    while (i < nPts - wOff) {
       if (pts[i].r <= 235) {
         const cDir = pts[i].dir;
         const cPts = [];
-        while (i < pts.length - wOff && pts[i].r <= 240 && pts[i].dir === cDir) {
+        while (i < nPts - wOff && pts[i].r <= 240 && pts[i].dir === cDir) {
           cPts.push(pts[i]);
           i++;
         }
-        if (cPts.length >= 3 && (cPts[cPts.length - 1].s - cPts[0].s) >= 12) {
+        if (cPts.length >= 2 && (cPts[cPts.length - 1].s - cPts[0].s) >= 12) {
           rawCorners.push({ dir: cDir, cPts });
         }
       } else {
@@ -439,12 +472,11 @@
       }
     }
 
-    // Sloučení blízkých stejnosměrných zatáček (< 16 m)
     const merged = [];
     for (const rc of rawCorners) {
       if (merged.length) {
         const prev = merged[merged.length - 1];
-        if (prev.dir === rc.dir && (rc.cPts[0].s - prev.cPts[prev.cPts.length - 1].s) < 16) {
+        if (prev.dir === rc.dir && (rc.cPts[0].s - prev.cPts[prev.cPts.length - 1].s) < 18) {
           prev.cPts = prev.cPts.concat(rc.cPts);
           continue;
         }
@@ -484,9 +516,9 @@
       });
     }
 
-    const totalS = pts.length ? pts[pts.length - 1].s : 0;
+    const totalS = nPts ? pts[nPts - 1].s : 0;
     const finalDur = durationSec != null ? Math.round(durationSec) : Math.round((totalS / 1000 / 60) * 3600);
-    const destCoord = endCoord || (pts.length ? { lat: pts[pts.length - 1].lat, lon: pts[pts.length - 1].lon, label: stageName.split('→').pop().trim() } : null);
+    const destCoord = endCoord || (nPts ? { lat: pts[nPts - 1].lat, lon: pts[nPts - 1].lon, label: stageName.split('→').pop().trim() } : null);
 
     return {
       id: 'route_' + Date.now(),
@@ -498,7 +530,8 @@
       isCustomNavRoute: !!endCoord,
       corners_count: pacenotes.length,
       pacenotes,
-      geometry: pts
+      geometry: pts,
+      _mercatorReady: true
     };
   }
 
@@ -512,7 +545,7 @@
   }
 
   // =========================================================================
-  // 6. NAŠEPTÁVAČ + HISTORIE MÍST + ŽIVÝ VÝPOČET ČASU TRASY (PHOTON + OSRM)
+  // 6. NAŠEPTÁVAČ + HISTORIE + AUTO-CLEAR PO KLIKNUTÍ NA INPUT
   // =========================================================================
   async function searchPlaceSuggestions(query) {
     const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=16&lat=49.8&lon=15.5`;
@@ -603,22 +636,28 @@
     let debounceTimer = null;
 
     const showHistory = () => {
-      const q = inputEl.value.trim();
-      if (q.length < 2 || q === '📍 Moje aktuální poloha') {
-        renderSuggestionsDropdown(listEl, state.placeHistory, isStartField, true, (picked) => {
-          if (picked.isGps) {
-            setStartToCurrentGps();
-          } else {
-            inputEl.value = picked.sub ? `${picked.label}, ${picked.sub}` : picked.label;
-            onSelect(picked);
-            tryFetchRoutePreview();
-          }
-        });
-      }
+      renderSuggestionsDropdown(listEl, state.placeHistory, isStartField, true, (picked) => {
+        if (picked.isGps) {
+          setStartToCurrentGps();
+        } else {
+          inputEl.value = picked.sub ? `${picked.label}, ${picked.sub}` : picked.label;
+          onSelect(picked);
+          tryFetchRoutePreview();
+        }
+        inputEl.blur();
+      });
     };
 
-    inputEl.addEventListener('focus', showHistory);
-    inputEl.addEventListener('click', showHistory);
+    // Jakmile uživatel klikne do inputu, jakýkoliv text co tam byl OKAMŽITĚ zmizí a otevře se historie!
+    inputEl.addEventListener('focus', () => {
+      if (inputEl.value.length > 0) {
+        inputEl.value = '';
+        onSelect(null);
+        state.previewRouteData = null;
+        el.routePreviewCard.classList.add('hidden');
+      }
+      showHistory();
+    });
 
     inputEl.addEventListener('input', () => {
       onSelect(null);
@@ -639,6 +678,7 @@
             inputEl.value = picked.sub ? `${picked.label}, ${picked.sub}` : picked.label;
             onSelect(picked);
             tryFetchRoutePreview();
+            inputEl.blur();
           });
         } catch (_) {
           listEl.classList.add('hidden');
@@ -703,12 +743,22 @@
     return buildStageFromPoints(rawPts, `${startObj.label} → ${endObj.label}`, route.duration, endObj);
   }
 
-  // Živý výpočet vzdálenosti a času hned jak vybereš Start i Cíl v modalu
   async function tryFetchRoutePreview() {
-    if (!state.selectedStart || !state.selectedEnd) return;
+    if (!state.selectedEnd) return;
+    let startObj = state.selectedStart;
+    if (!startObj && !el.inputStart.value.trim()) {
+      try {
+        startObj = await getCurrentGpsPromise();
+        state.selectedStart = startObj;
+      } catch (_) {
+        return;
+      }
+    }
+    if (!startObj) return;
+
     el.routeSearchStatus.textContent = 'Počítám délku a čas trasy...';
     try {
-      const stage = await fetchOsrmStage(state.selectedStart, state.selectedEnd);
+      const stage = await fetchOsrmStage(startObj, state.selectedEnd);
       state.previewRouteData = stage;
       el.previewDist.textContent = `📏 ${stage.total_length_km} km`;
       el.previewTime.textContent = `⏱️ ${formatDuration(stage.duration_sec)}`;
@@ -752,7 +802,6 @@
         state.selectedEnd = endObj;
       }
 
-      // Uložíme do historie míst
       savePlaceToHistory(startObj);
       savePlaceToHistory(endObj);
 
@@ -773,14 +822,12 @@
   }
 
   // =========================================================================
-  // 7. INTERAKTIVNÍ OTÁČEJÍCÍ SE MAPA (PAN + PINCH ZOOM + RE-CENTER + KOMPAS)
+  // 7. ULTRA-RYCHLÁ INTERAKTIVNÍ MAPA (PAN + PINCH-ZOOM + 2-PRSTÉ OTÁČENÍ)
   // =========================================================================
   function latLonToWorldPx(lat, lon, zoom) {
     const scale = TILE_SIZE * Math.pow(2, zoom);
-    const x = ((lon + 180) / 360) * scale;
-    const sinLat = Math.sin((lat * Math.PI) / 180);
-    const y = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale;
-    return [x, y];
+    const [mx, my] = latLonToNormMercator(lat, lon);
+    return [mx * scale, my * scale];
   }
 
   function worldPxToLatLon(wx, wy, zoom) {
@@ -795,12 +842,16 @@
     const key = `${z}/${x}/${y}`;
     if (state.tileCache.has(key)) return state.tileCache.get(key);
 
+    // Omezení velikosti cache dlaždic (max 250 dlaždic v paměti)
+    if (state.tileCache.size > 250) {
+      const firstKey = state.tileCache.keys().next().value;
+      state.tileCache.delete(firstKey);
+    }
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
-    img.onload = () => {
-      if (!state.isRunning) drawInteractiveMap();
-    };
+    img.onload = () => scheduleMapRedraw();
     state.tileCache.set(key, img);
     return img;
   }
@@ -814,13 +865,15 @@
       lat = state.liveGpsPos.lat;
       lon = state.liveGpsPos.lon;
     } else if (geom.length) {
-      let idx = 0;
-      for (let i = 0; i < geom.length; i++) {
-        if (geom[i].s <= state.distanceM) idx = i;
-        else break;
+      // Rychlé binární vyhledání aktuálního bodu podle state.distanceM (O(log N) místo O(N))
+      let lo = 0, hi = geom.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (geom[mid].s <= state.distanceM) lo = mid;
+        else hi = mid - 1;
       }
-      const p0 = geom[idx];
-      const p1 = geom[Math.min(geom.length - 1, idx + 1)];
+      const p0 = geom[lo];
+      const p1 = geom[Math.min(geom.length - 1, lo + 1)];
       lat = p0.lat;
       lon = p0.lon;
       if (p1.s > p0.s) {
@@ -828,7 +881,7 @@
         lat = p0.lat + (p1.lat - p0.lat) * t;
         lon = p0.lon + (p1.lon - p0.lon) * t;
       }
-      const pAhead = geom[Math.min(geom.length - 1, idx + 3)];
+      const pAhead = geom[Math.min(geom.length - 1, lo + 3)];
       const dLon = (pAhead.lon - p0.lon) * Math.cos((lat * Math.PI) / 180);
       const dLat = pAhead.lat - p0.lat;
       if (Math.abs(dLon) > 1e-7 || Math.abs(dLat) > 1e-7) {
@@ -840,10 +893,6 @@
       }
     }
 
-    // PRIORITA SMĚRU ŠIPKY:
-    // 1. Kompas mobilu (deviceHeadingRad) – šipka se vždy otáčí podle mobilu!
-    // 2. Fallback GPS heading (při pohybu)
-    // 3. Fallback směr trasy (v Demo simulaci na PC bez kompasu)
     let arrowHeading = state.routeHeadingRad;
     if (state.deviceHeadingRad !== null) {
       arrowHeading = state.deviceHeadingRad;
@@ -859,8 +908,23 @@
     el.btnRecenter.classList.toggle('hidden', centered);
     if (centered) {
       state.mapZoom = Math.max(15.0, Math.min(17.0, state.mapZoom));
-      drawInteractiveMap();
+      scheduleMapRedraw();
     }
+  }
+
+  function unlockCameraToFreelook() {
+    if (!state.isCentered) return;
+    const car = getCarPose();
+    const anchorOffset = (el.trackCanvas.height * 0.68) - (el.trackCanvas.height * 0.5);
+    const [carWx, carWy] = latLonToWorldPx(car.lat, car.lon, state.mapZoom);
+    const cosR = Math.cos(state.cameraRotationRad);
+    const sinR = Math.sin(state.cameraRotationRad);
+    const shiftWx = sinR * anchorOffset;
+    const shiftWy = -cosR * anchorOffset;
+    const [cLat, cLon] = worldPxToLatLon(carWx + shiftWx, carWy + shiftWy, state.mapZoom);
+    state.cameraLat = cLat;
+    state.cameraLon = cLon;
+    setCenteredState(false);
   }
 
   function setupMapGestures() {
@@ -868,25 +932,11 @@
     const pointers = new Map();
     let lastPanX = 0, lastPanY = 0;
     let lastPinchDist = 0;
+    let lastPinchAngle = 0;
+    let isRightMouseRotating = false;
 
     function panByScreenDelta(dx, dy) {
-      if (state.isCentered) {
-        // Při odcentrování zafixujeme aktuální polohu kamery pod prstem
-        const car = getCarPose();
-        const anchorOffset = (el.trackCanvas.height * 0.68) - (el.trackCanvas.height * 0.5);
-        const [carWx, carWy] = latLonToWorldPx(car.lat, car.lon, state.mapZoom);
-        const cosR = Math.cos(state.cameraRotationRad);
-        const sinR = Math.sin(state.cameraRotationRad);
-        // Posuneme střed kamery tak, aby při přepnutí z anchorY=0.68 na 0.50 mapa vůbec neskočila!
-        const shiftWx = sinR * anchorOffset;
-        const shiftWy = -cosR * anchorOffset;
-        const [cLat, cLon] = worldPxToLatLon(carWx + shiftWx, carWy + shiftWy, state.mapZoom);
-        state.cameraLat = cLat;
-        state.cameraLon = cLon;
-        setCenteredState(false);
-      }
-
-      // Převod posunu na obrazovce (dx, dy) do otočených world souřadnic mapy
+      unlockCameraToFreelook();
       const cosR = Math.cos(state.cameraRotationRad);
       const sinR = Math.sin(state.cameraRotationRad);
       const worldDx = -dx * cosR + dy * sinR;
@@ -896,19 +946,32 @@
       const [newLat, newLon] = worldPxToLatLon(cWx + worldDx, cWy + worldDy, state.mapZoom);
       state.cameraLat = Math.max(-80, Math.min(80, newLat));
       state.cameraLon = newLon;
-      drawInteractiveMap();
+      scheduleMapRedraw();
     }
+
+    vp.addEventListener('contextmenu', (e) => e.preventDefault());
 
     vp.addEventListener('pointerdown', (e) => {
       if (e.target.closest('button')) return;
       vp.setPointerCapture(e.pointerId);
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Na PC: pravé tlačítko myši nebo Shift+tah = volné otáčení mapy
+      if (pointers.size === 1 && (e.button === 2 || e.shiftKey)) {
+        isRightMouseRotating = true;
+        lastPanX = e.clientX;
+        lastPanY = e.clientY;
+        return;
+      }
+
+      isRightMouseRotating = false;
       if (pointers.size === 1) {
         lastPanX = e.clientX;
         lastPanY = e.clientY;
       } else if (pointers.size === 2) {
         const pts = Array.from(pointers.values());
         lastPinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        lastPinchAngle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
         lastPanX = (pts[0].x + pts[1].x) / 2;
         lastPanY = (pts[0].y + pts[1].y) / 2;
       }
@@ -923,10 +986,20 @@
         const dy = e.clientY - lastPanY;
         lastPanX = e.clientX;
         lastPanY = e.clientY;
-        if (Math.hypot(dx, dy) > 0.5) panByScreenDelta(dx, dy);
+
+        if (isRightMouseRotating) {
+          unlockCameraToFreelook();
+          state.cameraRotationRad += dx * 0.008;
+          scheduleMapRedraw();
+        } else if (Math.hypot(dx, dy) > 0.5) {
+          panByScreenDelta(dx, dy);
+        }
       } else if (pointers.size === 2) {
+        // 2-PRSTÉ GESTO NA MOBILU: SOUČASNĚ PAN + PINCH-ZOOM + OTÁČENÍ MAPY!
+        unlockCameraToFreelook();
         const pts = Array.from(pointers.values());
         const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
         const midX = (pts[0].x + pts[1].x) / 2;
         const midY = (pts[0].y + pts[1].y) / 2;
 
@@ -934,8 +1007,16 @@
           const zoomDelta = Math.log2(dist / lastPinchDist);
           state.mapZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, state.mapZoom + zoomDelta));
         }
+
+        let dAngle = angle - lastPinchAngle;
+        while (dAngle > Math.PI) dAngle -= 2 * Math.PI;
+        while (dAngle < -Math.PI) dAngle += 2 * Math.PI;
+        state.cameraRotationRad -= dAngle;
+
         panByScreenDelta(midX - lastPanX, midY - lastPanY);
+
         lastPinchDist = dist;
+        lastPinchAngle = angle;
         lastPanX = midX;
         lastPanY = midY;
       }
@@ -943,6 +1024,7 @@
 
     const endPtr = (e) => {
       pointers.delete(e.pointerId);
+      if (pointers.size === 0) isRightMouseRotating = false;
       if (pointers.size === 1) {
         const remaining = Array.from(pointers.values())[0];
         lastPanX = remaining.x;
@@ -952,12 +1034,11 @@
     vp.addEventListener('pointerup', endPtr);
     vp.addEventListener('pointercancel', endPtr);
 
-    // Kolečko myši na PC pro zoomování
     vp.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.35 : -0.35;
+      const delta = e.deltaY < 0 ? 0.38 : -0.38;
       state.mapZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, state.mapZoom + delta));
-      drawInteractiveMap();
+      scheduleMapRedraw();
     }, { passive: false });
   }
 
@@ -1006,7 +1087,7 @@
     const zoomScale = Math.pow(2, state.mapZoom - tileZ);
     const [camWxZ, camWyZ] = latLonToWorldPx(camLat, camLon, tileZ);
 
-    // 1. SPODNÍ VRSTVA: OpenStreetMap dlaždice
+    // 1. SPODNÍ VRSTVA: OSM dlaždice
     bgCtx.save();
     bgCtx.fillStyle = '#e8e8e8';
     bgCtx.fillRect(0, 0, w, h);
@@ -1032,57 +1113,95 @@
     }
     bgCtx.restore();
 
-    // 2. HORNÍ VRSTVA: Trasa + šipka auta (otáčí se podle kompasu mobilu!)
-    const geom = state.currentStage ? state.currentStage.geometry : [];
-    const [camWx, camWy] = latLonToWorldPx(camLat, camLon, state.mapZoom);
+    // 2. HORNÍ VRSTVA: OPTIMALIZOVANÉ VYKRESLENÍ TRASY (CULLING + LOD + COLOR BATCHING)
+    const worldScale = TILE_SIZE * Math.pow(2, state.mapZoom);
+    const [camMx, camMy] = latLonToNormMercator(camLat, camLon);
+    const camWx = camMx * worldScale;
+    const camWy = camMy * worldScale;
 
     fgCtx.save();
     fgCtx.translate(anchorX, anchorY);
     fgCtx.rotate(-mapRotation);
 
-    if (geom.length) {
+    const geom = state.currentStage ? state.currentStage.geometry : [];
+    if (geom.length > 1) {
+      if (!state.currentStage._mercatorReady) precomputeStageMercator(state.currentStage);
+
+      const viewBound = Math.hypot(w, h) * 0.78 + 60;
+      const stride = Math.max(1, Math.round(Math.pow(2, Math.max(0, 15.2 - state.mapZoom))));
       fgCtx.lineCap = 'round';
       fgCtx.lineJoin = 'round';
 
+      // A) Jediný batchovaný tmavý obrys pro viditelné segmenty
       fgCtx.beginPath();
-      for (let i = 0; i < geom.length; i++) {
-        const [wx, wy] = latLonToWorldPx(geom[i].lat, geom[i].lon, state.mapZoom);
-        if (i === 0) fgCtx.moveTo(wx - camWx, wy - camWy);
-        else fgCtx.lineTo(wx - camWx, wy - camWy);
+      let penDown = false;
+      for (let i = 0; i < geom.length; i += stride) {
+        const p = geom[i];
+        const rx = p.mx * worldScale - camWx;
+        const ry = p.my * worldScale - camWy;
+        if (Math.abs(rx) <= viewBound && Math.abs(ry) <= viewBound) {
+          if (!penDown) { fgCtx.moveTo(rx, ry); penDown = true; }
+          else fgCtx.lineTo(rx, ry);
+        } else {
+          penDown = false;
+        }
       }
-      fgCtx.strokeStyle = 'rgba(0, 0, 0, 0.72)';
+      fgCtx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
       fgCtx.lineWidth = 14;
       fgCtx.stroke();
 
-      for (let i = 1; i < geom.length; i++) {
-        const p0 = geom[i - 1], p1 = geom[i];
-        const [wx0, wy0] = latLonToWorldPx(p0.lat, p0.lon, state.mapZoom);
-        const [wx1, wy1] = latLonToWorldPx(p1.lat, p1.lon, state.mapZoom);
+      // B) Batchované barevné segmenty podle barvy (max ~20 stroke() volání místo 25 000!)
+      const palette = {
+        0: { color: 'rgba(148, 163, 184, 0.7)', width: 8 }, // Odjetá část
+        1: { color: '#ff2e2e', width: 10 },                 // Ostrá zatáčka
+        2: { color: '#ffd000', width: 9 },                  // Střední zatáčka
+        3: { color: '#00e676', width: 8 }                   // Rychlá / rovinka
+      };
 
-        fgCtx.beginPath();
-        fgCtx.moveTo(wx0 - camWx, wy0 - camWy);
-        fgCtx.lineTo(wx1 - camWx, wy1 - camWy);
+      let curColorKey = -1;
+      let prevVisX = 0, prevVisY = 0, hasPrev = false;
 
-        if (p1.s <= state.distanceM) {
-          fgCtx.strokeStyle = 'rgba(148, 163, 184, 0.7)';
-          fgCtx.lineWidth = 8;
-        } else if (p1.r < 40) {
-          fgCtx.strokeStyle = '#ff2e2e';
-          fgCtx.lineWidth = 10;
-        } else if (p1.r < 95) {
-          fgCtx.strokeStyle = '#ffd000';
-          fgCtx.lineWidth = 9;
-        } else {
-          fgCtx.strokeStyle = '#00e676';
-          fgCtx.lineWidth = 8;
+      for (let i = 0; i < geom.length; i += stride) {
+        const p = geom[i];
+        const rx = p.mx * worldScale - camWx;
+        const ry = p.my * worldScale - camWy;
+        const inView = Math.abs(rx) <= viewBound && Math.abs(ry) <= viewBound;
+
+        if (!inView) {
+          if (curColorKey !== -1) {
+            fgCtx.stroke();
+            curColorKey = -1;
+          }
+          hasPrev = false;
+          continue;
         }
-        fgCtx.stroke();
+
+        const cKey = p.s <= state.distanceM ? 0 : p.colorBucket;
+        if (!hasPrev) {
+          prevVisX = rx;
+          prevVisY = ry;
+          hasPrev = true;
+          continue;
+        }
+
+        if (cKey !== curColorKey) {
+          if (curColorKey !== -1) fgCtx.stroke();
+          curColorKey = cKey;
+          fgCtx.beginPath();
+          fgCtx.strokeStyle = palette[cKey].color;
+          fgCtx.lineWidth = palette[cKey].width;
+          fgCtx.moveTo(prevVisX, prevVisY);
+        }
+        fgCtx.lineTo(rx, ry);
+        prevVisX = rx;
+        prevVisY = ry;
       }
+      if (curColorKey !== -1) fgCtx.stroke();
     }
 
-    // 3. Šipka auta v mapových souřadnicích – otočená podle mobilu (car.arrowHeading)!
-    const [carWx, carWy] = latLonToWorldPx(car.lat, car.lon, state.mapZoom);
-    fgCtx.translate(carWx - camWx, carWy - camWy);
+    // 3. Šipka auta otočená podle mobilu (kompasu)
+    const [carMx, carMy] = latLonToNormMercator(car.lat, car.lon);
+    fgCtx.translate(carMx * worldScale - camWx, carMy * worldScale - camWy);
     fgCtx.rotate(car.arrowHeading);
 
     fgCtx.beginPath();
@@ -1241,7 +1360,7 @@
   }
 
   // =========================================================================
-  // 9. REŽIMY: REÁLNÁ GPS (HLAVNÍ) vs DEMO + AUTO-START Z AKTUÁLNÍ POLOHY
+  // 9. REŽIMY: REÁLNÁ GPS (HLAVNÍ) vs DEMO + RYCHLÝ MAP-MATCHING
   // =========================================================================
   function applyNavigationMode(isDemo) {
     pauseStage();
@@ -1268,7 +1387,49 @@
       el.speedValue.textContent = '0';
     }
     updateLeadTimeLabel();
-    drawInteractiveMap();
+    scheduleMapRedraw();
+  }
+
+  function findClosestGeometryPointFast(geom, latitude, longitude) {
+    const cosLat = Math.cos((latitude * Math.PI) / 180);
+    let bestIdx = state.lastMatchedIdx;
+    let bestDistSq = Infinity;
+
+    // 1. Lokální vyhledávání kolem poslední známé pozice (O(1) – bleskové!)
+    const startI = Math.max(0, state.lastMatchedIdx - 30);
+    const endI = Math.min(geom.length - 1, state.lastMatchedIdx + 140);
+    for (let i = startI; i <= endI; i++) {
+      const p = geom[i];
+      const dLat = (p.lat - latitude) * 111320;
+      const dLon = (p.lon - longitude) * 111320 * cosLat;
+      const d2 = dLat * dLat + dLon * dLon;
+      if (d2 < bestDistSq) { bestDistSq = d2; bestIdx = i; }
+    }
+
+    // 2. Pokud jsme daleko od lokálního okna (> 80 m), uděláme hrubý průchod a zpřesnění
+    if (bestDistSq > 6400) {
+      const coarseStep = Math.max(1, Math.floor(geom.length / 400));
+      let coarseBest = bestIdx;
+      for (let i = 0; i < geom.length; i += coarseStep) {
+        const p = geom[i];
+        const dLat = (p.lat - latitude) * 111320;
+        const dLon = (p.lon - longitude) * 111320 * cosLat;
+        const d2 = dLat * dLat + dLon * dLon;
+        if (d2 < bestDistSq) { bestDistSq = d2; coarseBest = i; }
+      }
+      const refStart = Math.max(0, coarseBest - coarseStep);
+      const refEnd = Math.min(geom.length - 1, coarseBest + coarseStep);
+      for (let i = refStart; i <= refEnd; i++) {
+        const p = geom[i];
+        const dLat = (p.lat - latitude) * 111320;
+        const dLon = (p.lon - longitude) * 111320 * cosLat;
+        const d2 = dLat * dLat + dLon * dLon;
+        if (d2 < bestDistSq) { bestDistSq = d2; bestIdx = i; }
+      }
+    }
+
+    state.lastMatchedIdx = bestIdx;
+    return geom[bestIdx];
   }
 
   function startGpsWatch() {
@@ -1296,14 +1457,7 @@
         updateLeadTimeLabel();
 
         if (state.currentStage && state.currentStage.geometry.length) {
-          let bestPt = state.currentStage.geometry[0];
-          let bestDist = Infinity;
-          for (const p of state.currentStage.geometry) {
-            const dLat = (p.lat - latitude) * 111320;
-            const dLon = (p.lon - longitude) * 111320 * Math.cos((latitude * Math.PI) / 180);
-            const d = dLat * dLat + dLon * dLon;
-            if (d < bestDist) { bestDist = d; bestPt = p; }
-          }
+          const bestPt = findClosestGeometryPointFast(state.currentStage.geometry, latitude, longitude);
           const deltaM = Math.max(0, bestPt.s - state.distanceM);
           if (deltaM < 250) {
             state.distanceM = bestPt.s;
@@ -1313,7 +1467,7 @@
           }
           evaluatePacenotesAtDistance(state.distanceM);
         }
-        drawInteractiveMap();
+        scheduleMapRedraw();
       },
       (err) => {
         el.gpsStatusBadge.textContent = 'GPS CHYBA';
@@ -1357,7 +1511,6 @@
     await requestCompassPermissionIfNeeded();
     setCenteredState(true);
 
-    // V reálném GPS režimu při spuštění trasy automaticky nastavíme start na aktuální polohu uživatele!
     if (!state.demoMode && state.currentStage.geometry.length) {
       try {
         el.gpsStatusBadge.textContent = 'START Z GPS...';
@@ -1368,7 +1521,6 @@
         const dLon = (firstPt.lon - gpsStart.lon) * 111320 * Math.cos((gpsStart.lat * Math.PI) / 180);
         const distFromStartM = Math.hypot(dLat, dLon);
 
-        // Pokud uživatel stojí dál než 150 m od původního začátku trasy, automaticky přepočítáme trasu z jeho polohy do cíle!
         if (distFromStartM > 150) {
           const lastPt = state.currentStage.geometry[state.currentStage.geometry.length - 1];
           const destObj = state.currentStage.destination || {
@@ -1379,6 +1531,7 @@
           const rerouted = await fetchOsrmStage(gpsStart, destObj);
           state.currentStage = rerouted;
           state.corners = rerouted.pacenotes.filter((n) => n.type === 'corner');
+          state.lastMatchedIdx = 0;
           el.activeRouteName.textContent = rerouted.name;
           state.distanceM = 0;
           state.spokenCornerIds.clear();
@@ -1420,12 +1573,13 @@
     pauseStage();
     clearSpeechQueue();
     state.distanceM = 0.0;
+    state.lastMatchedIdx = 0;
     state.spokenCornerIds.clear();
     state.spokenMilestones.clear();
     state.lastStraightAnnouncedFor = null;
     setCenteredState(true);
     evaluatePacenotesAtDistance(0);
-    drawInteractiveMap();
+    scheduleMapRedraw();
   }
 
   function finishStage() {
@@ -1503,6 +1657,7 @@
   function selectStage(stageId) {
     const found = state.stages.find((s) => s.id === stageId) || state.stages[0];
     if (!found) return;
+    precomputeStageMercator(found);
     state.currentStage = found;
     state.corners = (found.pacenotes || []).filter((n) => n.type === 'corner');
     el.stageSelect.value = found.id;
@@ -1518,14 +1673,12 @@
     updateLeadTimeLabel();
     setupMapGestures();
 
-    // Na Androidu / desktopu připojíme kompas automaticky (iOS povolí při kliknutí na START / tlačítko kompasu)
     if (typeof DeviceOrientationEvent === 'undefined' || typeof DeviceOrientationEvent.requestPermission !== 'function') {
       attachCompassListeners();
     }
 
-    window.addEventListener('resize', drawInteractiveMap);
+    window.addEventListener('resize', scheduleMapRedraw);
 
-    // Našeptávač + historie míst hned po rozkliknutí
     setupAutocomplete(el.inputStart, el.startSuggestions, true, (item) => { state.selectedStart = item; });
     setupAutocomplete(el.inputEnd, el.endSuggestions, false, (item) => { state.selectedEnd = item; });
 
@@ -1537,7 +1690,6 @@
       if (!state.audioEnabled) clearSpeechQueue();
     });
 
-    // Route modal: při otevření automaticky předvyplníme Start = Moje poloha (v GPS režimu)
     el.btnOpenRoute.addEventListener('click', () => {
       el.routeModal.classList.remove('hidden');
       if (!state.demoMode && !el.inputStart.value.trim()) {
@@ -1560,7 +1712,6 @@
       r.readAsText(f);
     });
 
-    // Settings modal
     el.btnOpenSettings.addEventListener('click', () => el.settingsModal.classList.remove('hidden'));
     el.btnCloseSettings.addEventListener('click', () => el.settingsModal.classList.add('hidden'));
     el.btnModeGps.addEventListener('click', () => applyNavigationMode(false));
@@ -1586,7 +1737,6 @@
       updateLeadTimeLabel();
     });
 
-    // Freemium modal
     el.freemiumPill.addEventListener('click', () => { updateFreemiumUi(); el.freemiumModal.classList.remove('hidden'); });
     el.btnCloseFreemium.addEventListener('click', () => el.freemiumModal.classList.add('hidden'));
     el.btnUnlockPro.addEventListener('click', () => {
