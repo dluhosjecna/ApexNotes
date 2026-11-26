@@ -1,0 +1,19 @@
+ApexNotes
+Autor: Michael Dluhoš
+Datum: 26. 11. 2026
+
+Celkový stav: cca 50% hotovo.
+Živá ukázka aplikace (PWA): https://dluhosjecna.github.io/ApexNotes/pwa/
+
+Co už je hotové:
+- Fáze 1 (Koncept & zadání): Hotovo (Lean Canvas, specifikace projektu, česká rally stupnice 1–6).
+- Fáze 2 (Geometrický algoritmus v Pythonu): Hotovo. Připraveny 3 reálné testovací GPX trasy z českých rally (Barum, Bohemia, Šumava), implementováno vyhlazení trasy (Catmull-Rom spline), výpočet Mengerovy křivosti, určení směru L/P, výškový profil (horizonty) a převod na český rally rozpis.
+- Fáze 3 (Mobilní aplikace): Kostra aplikace, GPS napojení, otočná mapa (OpenStreetMap v tmavém režimu s volným posouváním, zoomem, otáčením a re-center tlačítkem), kompas podle orientace mobilu, plánování trasy Start -> Cíl s našeptávačem, historií míst a výpočtem času jízdy. Implementováno i prediktivní čtení hlášek s nastavitelným předstihem (2–15 s), odpočet dlouhých rovinek a zobrazení o 1 pokyn napřed.
+
+Změny a vyřešené problémy během vývoje:
+- Místo nativní iOS aplikace (která vyžaduje Mac a placený Apple účet) jsem zvolil Offline PWA běžící na HTTPS přes GitHub Pages – na iPhonu 13 se dá přidat na plochu, běží na celou obrazovku a má přístup ke GPS i kompasu.
+- Optimalizoval jsem vykreslování mapy pro dlouhé trasy, aby se aplikace při jízdě nesekala.
+
+Co zbývá dodělat (další kroky):
+- Nadabovat vlastní audio banku lidským hlasem (zatím aplikace používá hlasovou syntézu prohlížeče a testovací pípání).
+- Provést reálný jízdní test v autě (Fáze 4) a podle něj finálně doladit prahy zatáček a načasování hlášek.

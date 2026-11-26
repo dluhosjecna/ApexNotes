@@ -265,15 +265,32 @@ def compute_turn_angle_deg(c_pts: List[Dict[str, float]]) -> float:
     return abs(math.degrees(total_rad))
 
 
-def radius_to_czech_severity(r: float, turn_angle_deg: float = 90.0) -> Tuple[int, bool]:
+def compute_core_radius(c_pts: List[Dict[str, float]]) -> float:
+    """
+    Spočítá efektivní poloměr nejostřejšího jádra zatáčky (nejmenší průměr
+    3 po sobě jdoucích bodů). Odfiltruje 1 šumový uzel, ale nikdy nezměkčí
+    ostrou 90° zatáčku jen proto, že měla dlouhý mírný nájezd.
+    """
+    radii = [p["radius"] for p in c_pts]
+    if len(radii) <= 2:
+        return min(radii)
+    best = 9999.0
+    for i in range(len(radii) - 2):
+        tri_avg = (radii[i] + radii[i + 1] + radii[i + 2]) / 3.0
+        if tri_avg < best:
+            best = tri_avg
+    return best
+
+
+def radius_to_czech_severity(r: float, turn_angle_deg: float = 90.0, length_m: float = 30.0) -> Tuple[int, bool]:
     """
     Převede efektivní poloměr zatáčky R (v metrech) a celkový úhel zatočení
     na českou rally stupnici 1–6 a příznak vracáku (is_hairpin):
-    - Vracák (stupeň 1 + hairpin): pouze když se silnice vrací zpět (>= 130°) a R < 32 m.
-    - Běžná 90° zatáčka (75°–125°): stupeň 2 (nikoliv vracák!).
-    - Malé úhly zatočení (< 45°) nemohou být ostré stupně 1–2.
+    - Vracák (stupeň 1 + hairpin): pouze když se silnice vrací zpět (>= 130°) a R < 34 m.
+    - Běžná 90° zatáčka (70°–125°): stupeň 2 (nikoliv vracák!).
+    - Slabé prohnutí (< 18° nebo stupeň 6 pod 24°): ignorováno, aby nemátlo řidiče.
     """
-    if r > 245.0 or turn_angle_deg < 14.0:
+    if r > 215.0 or turn_angle_deg < 18.0:
         return 0, False
 
     # Skutečný vracák (hairpin) = silnice se otáčí o >= 130° zpět
@@ -291,9 +308,12 @@ def radius_to_czech_severity(r: float, turn_angle_deg: float = 90.0) -> Tuple[in
         sev = 3
     elif r < 110.0:
         sev = 4
-    elif r < 170.0:
+    elif r < 165.0:
         sev = 5
     else:
+        # Stupeň 6 hlásíme jen pro výraznější dlouhý oblouk, ne pro drobnou vlnku
+        if turn_angle_deg < 24.0 or length_m < 25.0:
+            return 0, False
         sev = 6
 
     # Korekce podle celkového úhlu zatočení (krátký mělký zlom není ostrá zatáčka)
@@ -332,7 +352,7 @@ def extract_pacenotes(pts: List[Dict[str, float]]) -> List[Dict[str, Any]]:
     """
     Segmentuje trať na jednotlivé zatáčky, horizonty a rovinky a generuje český rally rozpis.
     """
-    CORNER_MAX_R = 235.0
+    CORNER_MAX_R = 215.0
     MIN_CORNER_LEN_M = 12.0
 
     raw_corners = []
@@ -350,7 +370,6 @@ def extract_pacenotes(pts: List[Dict[str, float]]) -> List[Dict[str, Any]]:
             elif pt["dir"] == curr_dir:
                 curr_pts.append(pt)
             else:
-                # Okamžitá změna směru (esíčko L -> P nebo P -> L)
                 if (curr_pts[-1]["s"] - curr_pts[0]["s"]) >= MIN_CORNER_LEN_M:
                     raw_corners.append((curr_dir, curr_pts))
                 curr_dir = pt["dir"]
@@ -365,59 +384,109 @@ def extract_pacenotes(pts: List[Dict[str, float]]) -> List[Dict[str, Any]]:
     if in_corner and curr_pts and (curr_pts[-1]["s"] - curr_pts[0]["s"]) >= MIN_CORNER_LEN_M:
         raw_corners.append((curr_dir, curr_pts))
 
-    # Sloučení stejnosměrných zatáček, které jsou od sebe méně než 15 m
+    # Bezpečnostní sloučení stejnosměrných zatáček:
+    # - mezera <= 35 m: vždy jedna zatáčka
+    # - mezera <= 65 m a jedna část je mírná (R >= 100 m) a druhá ostrá (R < 60 m): sloučit do jedné!
     merged_corners = []
     for c_dir, c_pts in raw_corners:
         if merged_corners:
             prev_dir, prev_pts = merged_corners[-1]
             gap = c_pts[0]["s"] - prev_pts[-1]["s"]
-            if prev_dir == c_dir and gap < 15.0:
-                merged_corners[-1] = (prev_dir, prev_pts + c_pts)
-                continue
+            if prev_dir == c_dir:
+                prev_r = compute_core_radius(prev_pts)
+                curr_r = compute_core_radius(c_pts)
+                is_mild_into_sharp = (prev_r >= 95.0 and curr_r < 65.0) or (curr_r >= 95.0 and prev_r < 65.0)
+                if gap <= 35.0 or (gap <= 65.0 and is_mild_into_sharp):
+                    merged_corners[-1] = (prev_dir, prev_pts + c_pts)
+                    continue
         merged_corners.append((c_dir, c_pts))
+
+    # Předvyhodnocení zatáček a bezpečnostní post-pass (nikdy nehlásit mírnou 5/6 těsně před ostrou 1-3 stejného směru)
+    evaluated = []
+    for c_dir, c_pts in merged_corners:
+        start_s = c_pts[0]["s"]
+        end_s = c_pts[-1]["s"]
+        length_m = end_s - start_s
+        apex_pt = min(c_pts, key=lambda p: p["radius"])
+        eff_r = compute_core_radius(c_pts)
+        turn_angle_deg = compute_turn_angle_deg(c_pts)
+        severity, is_hairpin = radius_to_czech_severity(eff_r, turn_angle_deg, length_m)
+        if severity == 0:
+            continue
+        evaluated.append({
+            "dir": c_dir,
+            "pts": c_pts,
+            "start_s": start_s,
+            "end_s": end_s,
+            "length_m": length_m,
+            "apex_pt": apex_pt,
+            "eff_r": eff_r,
+            "turn_angle_deg": turn_angle_deg,
+            "severity": severity,
+            "is_hairpin": is_hairpin
+        })
+
+    # Post-pass: odstranění návnadové mírné zatáčky (5/6) těsně před/za ostrou zatáčkou (1-3) stejného směru
+    safe_corners = []
+    for item in evaluated:
+        if safe_corners:
+            prev = safe_corners[-1]
+            gap = item["start_s"] - prev["end_s"]
+            if prev["dir"] == item["dir"] and gap <= 70.0:
+                if prev["severity"] >= 5 and item["severity"] <= 3:
+                    # Mírný nájezd (5/6) před ostrou (1-3) -> nahradíme rovnou ostrou zatáčkou!
+                    safe_corners[-1] = item
+                    continue
+                if prev["severity"] <= 3 and item["severity"] >= 5 and item["turn_angle_deg"] < 32.0:
+                    # Drobný dojezdový ohyb za ostrou zatáčkou -> pohltíme do ostré
+                    prev["end_s"] = item["end_s"]
+                    prev["length_m"] = prev["end_s"] - prev["start_s"]
+                    continue
+        safe_corners.append(item)
 
     pacenotes = []
     prev_end_s = 0.0
 
-    for idx, (c_dir, c_pts) in enumerate(merged_corners):
-        start_s = c_pts[0]["s"]
-        end_s = c_pts[-1]["s"]
-        length_m = end_s - start_s
+    for idx, c_item in enumerate(safe_corners):
+        c_dir = c_item["dir"]
+        c_pts = c_item["pts"]
+        start_s = c_item["start_s"]
+        end_s = c_item["end_s"]
+        length_m = c_item["length_m"]
+        apex_pt = c_item["apex_pt"]
+        eff_r = c_item["eff_r"]
+        turn_angle_deg = c_item["turn_angle_deg"]
+        severity = c_item["severity"]
+        is_hairpin = c_item["is_hairpin"]
 
-        # Apex (bod s nejmenším poloměrem) a robustní efektivní poloměr (25. percentil)
-        apex_pt = min(c_pts, key=lambda p: p["radius"])
-        sorted_r = sorted(p["radius"] for p in c_pts)
-        eff_r = sorted_r[max(0, int(len(sorted_r) * 0.25))]
-        turn_angle_deg = compute_turn_angle_deg(c_pts)
-
-        severity, is_hairpin = radius_to_czech_severity(eff_r, turn_angle_deg)
-        if severity == 0:
-            continue
-
-        # Detekce utahování / otevírání (porovnání 1. a 2. poloviny zatáčky)
+        # Detekce utahování / otevírání – ale NIKDY nezměkčíme stupeň na 5/6 před ostrou 1-3!
         half = max(1, len(c_pts) // 2)
-        r_first = sorted(p["radius"] for p in c_pts[:half])[max(0, int(half * 0.3))]
-        r_second = sorted(p["radius"] for p in c_pts[half:])[max(0, int((len(c_pts) - half) * 0.3))]
+        r_first = compute_core_radius(c_pts[:half])
+        r_second = compute_core_radius(c_pts[half:])
         ang_first = compute_turn_angle_deg(c_pts[:half + 1])
         ang_second = compute_turn_angle_deg(c_pts[half:])
-        sev_first, _ = radius_to_czech_severity(r_first, max(ang_first, turn_angle_deg * 0.6))
-        sev_second, _ = radius_to_czech_severity(r_second, max(ang_second, turn_angle_deg * 0.6))
+        sev_first, _ = radius_to_czech_severity(r_first, max(ang_first, turn_angle_deg * 0.55), length_m * 0.5)
+        sev_second, _ = radius_to_czech_severity(r_second, max(ang_second, turn_angle_deg * 0.55), length_m * 0.5)
         sev_first = sev_first or severity
         sev_second = sev_second or severity
 
         modifier = ""
         sub_call = ""
-        if not is_hairpin and length_m >= 32.0 and sev_second < sev_first and (sev_first - sev_second) >= 1:
-            # Druhá polovina je ostřejší -> zatáčka utahuje!
-            severity = sev_first
-            modifier = "utahuje"
-            if sev_first - sev_second >= 2:
-                sub_call = f"do {SEVERITY_WORDS_CZ[sev_second]}"
-        elif not is_hairpin and length_m >= 38.0 and sev_second > sev_first and (sev_second - sev_first) >= 1:
+        if not is_hairpin and length_m >= 40.0 and sev_second < sev_first and (sev_first - sev_second) >= 1:
+            if sev_first <= 4:
+                # Výrazná 3 nebo 4, která utahuje -> hlásíme např. "Pravá 4 utahuje do 2"
+                severity = sev_first
+                modifier = "utahuje"
+                if sev_first - sev_second >= 1:
+                    sub_call = f"do {SEVERITY_WORDS_CZ[sev_second]}"
+            else:
+                # Pokud nájezd byl jen 5/6, rovnou hlásíme ostrou zatáčku (bez klamavé 5/6!)
+                severity = sev_second
+        elif not is_hairpin and length_m >= 42.0 and sev_second > sev_first and (sev_second - sev_first) >= 1:
             severity = sev_first
             modifier = "otevírá"
 
-        is_long = length_m >= 70.0 and not is_hairpin
+        is_long = length_m >= 75.0 and not is_hairpin
 
         # Detekce horizontu nebo klesání/stoupání v zatáčce
         min_grade_change = min(p["grade_change"] for p in c_pts)
@@ -471,8 +540,8 @@ def extract_pacenotes(pts: List[Dict[str, float]]) -> List[Dict[str, Any]]:
             tokens.append("horizont")
 
         # Navázání na další zatáčku ("do...")
-        if idx + 1 < len(merged_corners):
-            next_start = merged_corners[idx + 1][1][0]["s"]
+        if idx + 1 < len(safe_corners):
+            next_start = safe_corners[idx + 1]["start_s"]
             if (next_start - end_s) < 25.0:
                 parts.append("do")
                 tokens.append("do")

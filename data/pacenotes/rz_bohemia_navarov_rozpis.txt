@@ -1,157 +1,139 @@
 ZÁVODNÍ ROZPIS (PACENOTES) - RZ2 Rally Bohemia – Návarov (Železný Brod – Návarov – Zlatá Olešnice)
-Délka tratě: 13.11 km (13105.0 m) | Nadmořská výška: 306.3 - 519.9 m n. m. | Počet zatáček: 97
+Délka tratě: 13.11 km (13105.0 m) | Nadmořská výška: 306.3 - 519.9 m n. m. | Počet zatáček: 86
 ------------------------------------------------------------------------
-[   5.0 m]   ↑   | Dále 100
-[  97.5 m]  L5   | Levá pět                            (R=40.9 m, d=12.5 m)
-[ 115.0 m]   ↑   | Dále 80
-[ 195.0 m]  P4   | Pravá čtyři                         (R=17.7 m, d=15.0 m)
+[   5.0 m]   ↑   | Dále 200
+[ 195.0 m]  P4   | Pravá čtyři                         (R=19.6 m, d=15.0 m)
 [ 215.0 m]   ↑   | Dále 180
-[ 395.0 m]  P5   | Pravá pět                           (R=135.3 m, d=52.5 m)
-[ 452.5 m]   ↑   | Dále 160
-[ 615.0 m]  L4   | Levá čtyři do                       (R=37.6 m, d=30.0 m)
-[ 650.0 m]   ↑   | Dále 50
-[ 697.5 m]  P4   | Pravá čtyři                         (R=66.6 m, d=60.0 m)
-[ 762.5 m]   ↑   | Dále 80
-[ 832.5 m]  L4   | Levá čtyři přes horizont            (R=28.1 m, d=22.5 m)
-[ 860.0 m]   ↑   | Dále 50
-[ 902.5 m]  L5   | Levá pět                            (R=113.6 m, d=45.0 m)
-[ 952.5 m]   ↑   | Dále 400
-[1330.0 m]  P1!  | Pravá jedna vracák do               (R=5.4 m, d=22.5 m)
-[1355.0 m]  L5   | Levá pět do                         (R=23.9 m, d=12.5 m)
-[1382.5 m]  P2   | Pravá dva do                        (R=9.9 m, d=25.0 m)
-[1410.0 m]  L4   | Levá čtyři                          (R=34.3 m, d=27.5 m)
+[ 397.5 m]  P5   | Pravá pět                           (R=116.2 m, d=47.5 m)
+[ 450.0 m]   ↑   | Dále 160
+[ 615.0 m]  L4   | Levá čtyři do                       (R=27.7 m, d=30.0 m)
+[ 647.5 m]  P4   | Pravá čtyři dlouhá                  (R=50.6 m, d=107.5 m)
+[ 760.0 m]   ↑   | Dále 80
+[ 835.0 m]  L4   | Levá čtyři dlouhá otevírá přes horizont (R=25.8 m, d=110.0 m)
+[ 950.0 m]   ↑   | Dále 400
+[1330.0 m]  P1!  | Pravá jedna vracák do               (R=5.1 m, d=22.5 m)
+[1355.0 m]  L5   | Levá pět do                         (R=26.2 m, d=12.5 m)
+[1382.5 m]  P2   | Pravá dva do                        (R=9.4 m, d=25.0 m)
+[1410.0 m]  L4   | Levá čtyři                          (R=24.1 m, d=27.5 m)
 [1442.5 m]   ↑   | Dále 80
-[1512.5 m]  P3   | Pravá tři do                        (R=14.9 m, d=15.0 m)
-[1532.5 m]  L1!  | Levá jedna vracák                   (R=18.0 m, d=55.0 m)
+[1512.5 m]  P3   | Pravá tři do                        (R=15.9 m, d=15.0 m)
+[1532.5 m]  L1!  | Levá jedna vracák                   (R=8.8 m, d=55.0 m)
 [1592.5 m]   ↑   | Dále 50
-[1637.5 m]  P4   | Pravá čtyři                         (R=68.8 m, d=40.0 m)
-[1682.5 m]   ↑   | Dále 40
-[1717.5 m]  L5   | Levá pět                            (R=87.3 m, d=42.5 m)
+[1637.5 m]  P4   | Pravá čtyři                         (R=58.2 m, d=40.0 m)
+[1682.5 m]   ↑   | Dále 50
+[1727.5 m]  L5   | Levá pět                            (R=75.7 m, d=32.5 m)
 [1765.0 m]   ↑   | Dále 180
-[1942.5 m]  P4   | Pravá čtyři přes horizont           (R=33.3 m, d=37.5 m)
+[1942.5 m]  P4   | Pravá čtyři přes horizont           (R=25.8 m, d=37.5 m)
 [1985.0 m]   ↑   | Dále 60
-[2040.0 m]  P3   | Pravá tři dlouhá přes horizont      (R=49.0 m, d=70.0 m)
+[2040.0 m]  P3   | Pravá tři přes horizont             (R=42.5 m, d=70.0 m)
 [2115.0 m]   ↑   | Dále 60
-[2167.5 m]  L2   | Levá dva přes horizont              (R=20.0 m, d=62.5 m)
+[2167.5 m]  L1   | Levá jedna přes horizont            (R=17.6 m, d=62.5 m)
 [2235.0 m]   ↑   | Dále 300
-[2525.0 m]  P4   | Pravá čtyři dlouhá                  (R=100.7 m, d=70.0 m)
-[2600.0 m]   ↑   | Dále 100
-[2702.5 m]  P4   | Pravá čtyři přes horizont           (R=12.0 m, d=15.0 m)
+[2527.5 m]  P4   | Pravá čtyři                         (R=78.3 m, d=65.0 m)
+[2597.5 m]   ↑   | Dále 120
+[2702.5 m]  P4   | Pravá čtyři přes horizont           (R=13.0 m, d=15.0 m)
 [2722.5 m]   ↑   | Dále 500
-[3207.5 m]  P1!  | Pravá jedna vracák do               (R=5.5 m, d=40.0 m)
-[3250.0 m]  L2   | Levá dva přes horizont              (R=28.8 m, d=55.0 m)
+[3207.5 m]  P1!  | Pravá jedna vracák do               (R=4.7 m, d=40.0 m)
+[3250.0 m]  L2   | Levá dva přes horizont              (R=18.0 m, d=55.0 m)
 [3310.0 m]   ↑   | Dále 260
-[3570.0 m]  P4   | Pravá čtyři přes horizont           (R=68.5 m, d=45.0 m)
-[3620.0 m]   ↑   | Dále 200
-[3817.5 m]  P3   | Pravá tři dlouhá přes horizont do   (R=67.2 m, d=102.5 m)
-[3932.5 m]  L2   | Levá dva přes horizont do           (R=23.9 m, d=52.5 m)
-[3995.0 m]  P4   | Pravá čtyři přes horizont           (R=41.2 m, d=32.5 m)
-[4032.5 m]   ↑   | Dále 60
-[4092.5 m]  L5   | Levá pět                            (R=82.9 m, d=42.5 m)
+[3570.0 m]  P4   | Pravá čtyři přes horizont           (R=49.8 m, d=45.0 m)
+[3620.0 m]   ↑   | Dále 160
+[3780.0 m]  P3   | Pravá tři dlouhá přes horizont do   (R=58.0 m, d=140.0 m)
+[3932.5 m]  L2   | Levá dva přes horizont do           (R=23.0 m, d=52.5 m)
+[3995.0 m]  P4   | Pravá čtyři přes horizont           (R=37.8 m, d=30.0 m)
+[4030.0 m]   ↑   | Dále 70
+[4095.0 m]  L5   | Levá pět                            (R=81.7 m, d=40.0 m)
 [4140.0 m]   ↑   | Dále 650
-[4797.5 m]  P5   | Pravá pět                           (R=36.0 m, d=15.0 m)
+[4797.5 m]  P5   | Pravá pět                           (R=36.5 m, d=15.0 m)
 [4817.5 m]   ↑   | Dále 120
-[4927.5 m]  L5   | Levá pět do                         (R=72.3 m, d=30.0 m)
-[4970.0 m]  P1   | Pravá jedna                         (R=13.7 m, d=50.0 m)
-[5025.0 m]   ↑   | Dále 450
-[5467.5 m]  L5   | Levá pět                            (R=74.4 m, d=27.5 m)
-[5500.0 m]   ↑   | Dále 350
-[5845.0 m]  L5   | Levá pět                            (R=99.9 m, d=57.5 m)
-[5907.5 m]   ↑   | Dále 100
-[6000.0 m]  L5   | Levá pět do                         (R=80.2 m, d=35.0 m)
-[6052.5 m]  P3   | Pravá tři přes horizont do          (R=37.0 m, d=47.5 m)
-[6102.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=18.1 m, d=60.0 m)
-[6167.5 m]  P3   | Pravá tři otevírá                   (R=30.6 m, d=57.5 m)
+[4927.5 m]  L5   | Levá pět do                         (R=64.5 m, d=30.0 m)
+[4970.0 m]  P1   | Pravá jedna                         (R=8.2 m, d=47.5 m)
+[5022.5 m]   ↑   | Dále 850
+[5845.0 m]  L5   | Levá pět                            (R=66.5 m, d=55.0 m)
+[5905.0 m]   ↑   | Dále 100
+[6000.0 m]  L5   | Levá pět do                         (R=70.0 m, d=32.5 m)
+[6052.5 m]  P3   | Pravá tři přes horizont do          (R=23.7 m, d=47.5 m)
+[6102.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=14.1 m, d=60.0 m)
+[6167.5 m]  P3   | Pravá tři otevírá                   (R=26.8 m, d=57.5 m)
 [6230.0 m]   ↑   | Dále 40
-[6267.5 m]  P4   | Pravá čtyři dlouhá                  (R=74.7 m, d=100.0 m)
-[6372.5 m]   ↑   | Dále 240
-[6607.5 m]  P5   | Pravá pět přes horizont             (R=53.1 m, d=17.5 m)
-[6630.0 m]   ↑   | Dále 50
-[6677.5 m]  L5   | Levá pět                            (R=70.7 m, d=22.5 m)
-[6705.0 m]   ↑   | Dále 60
-[6762.5 m]  L1!  | Levá jedna vracák přes horizont     (R=10.1 m, d=50.0 m)
+[6267.5 m]  P3   | Pravá tři dlouhá                    (R=57.7 m, d=100.0 m)
+[6372.5 m]   ↑   | Dále 400
+[6762.5 m]  L1!  | Levá jedna vracák přes horizont     (R=8.8 m, d=50.0 m)
 [6817.5 m]   ↑   | Dále 40
-[6847.5 m]  P1!  | Pravá jedna vracák přes horizont do (R=10.5 m, d=47.5 m)
-[6912.5 m]  L5   | Levá pět přes horizont              (R=53.6 m, d=25.0 m)
+[6847.5 m]  P1!  | Pravá jedna vracák přes horizont do (R=9.4 m, d=47.5 m)
+[6915.0 m]  L5   | Levá pět přes horizont              (R=50.0 m, d=22.5 m)
 [6942.5 m]   ↑   | Dále 50
-[6990.0 m]  P4   | Pravá čtyři přes horizont           (R=67.9 m, d=55.0 m)
-[7050.0 m]   ↑   | Dále 50
-[7092.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=16.5 m, d=67.5 m)
-[7175.0 m]  P1!  | Pravá jedna vracák přes horizont do (R=9.2 m, d=47.5 m)
-[7227.5 m]  L1!  | Levá jedna vracák přes horizont     (R=8.2 m, d=37.5 m)
-[7270.0 m]   ↑   | Dále 70
-[7335.0 m]  L5   | Levá pět do                         (R=44.3 m, d=17.5 m)
-[7360.0 m]  P1!  | Pravá jedna vracák přes horizont do (R=9.7 m, d=50.0 m)
-[7412.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=10.4 m, d=55.0 m)
-[7490.0 m]  P2   | Pravá dva                           (R=25.8 m, d=50.0 m)
+[6990.0 m]  P4   | Pravá čtyři přes horizont           (R=58.8 m, d=52.5 m)
+[7047.5 m]   ↑   | Dále 50
+[7092.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=11.2 m, d=67.5 m)
+[7175.0 m]  P1!  | Pravá jedna vracák přes horizont do (R=8.5 m, d=47.5 m)
+[7227.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=7.4 m, d=125.0 m)
+[7360.0 m]  P1!  | Pravá jedna vracák přes horizont do (R=8.6 m, d=50.0 m)
+[7412.5 m]  L1!  | Levá jedna vracák přes horizont do  (R=9.9 m, d=55.0 m)
+[7490.0 m]  P2   | Pravá dva                           (R=22.3 m, d=50.0 m)
 [7545.0 m]   ↑   | Dále 220
-[7752.5 m]  P2   | Pravá dva otevírá přes horizont do  (R=18.9 m, d=55.0 m)
-[7812.5 m]  L3   | Levá tři přes horizont do           (R=41.9 m, d=47.5 m)
-[7865.0 m]  P1!  | Pravá jedna vracák přes horizont    (R=8.3 m, d=40.0 m)
+[7752.5 m]  P2   | Pravá dva otevírá přes horizont do  (R=15.4 m, d=55.0 m)
+[7812.5 m]  L3   | Levá tři přes horizont do           (R=25.7 m, d=47.5 m)
+[7865.0 m]  P1!  | Pravá jedna vracák přes horizont    (R=7.3 m, d=40.0 m)
 [7910.0 m]   ↑   | Dále 140
-[8037.5 m]  L3!  | Levá tři utahuje přes horizont      (R=22.9 m, d=65.0 m)
+[8040.0 m]  L3!  | Levá tři utahuje do dva přes horizont (R=15.4 m, d=62.5 m)
 [8107.5 m]   ↑   | Dále 50
-[8152.5 m]  P5   | Pravá pět přes horizont do          (R=54.4 m, d=30.0 m)
-[8197.5 m]  L1!  | Levá jedna vracák přes horizont     (R=15.8 m, d=67.5 m)
-[8295.0 m]  P2   | Pravá dva přes horizont             (R=14.2 m, d=40.0 m)
-[8360.0 m]  L5   | Levá pět do                         (R=83.6 m, d=37.5 m)
-[8407.5 m]  P5   | Pravá pět                           (R=85.3 m, d=35.0 m)
-[8472.5 m]  P2   | Pravá dva přes horizont do          (R=24.7 m, d=55.0 m)
-[8542.5 m]  L2   | Levá dva přes horizont do           (R=25.4 m, d=50.0 m)
-[8597.5 m]  P5   | Pravá pět přes horizont do          (R=49.7 m, d=22.5 m)
-[8640.0 m]  P5   | Pravá pět přes horizont do          (R=63.3 m, d=42.5 m)
-[8700.0 m]  L5   | Levá pět do                         (R=125.4 m, d=57.5 m)
-[8775.0 m]  P5!  | Pravá pět utahuje                   (R=43.6 m, d=50.0 m)
+[8152.5 m]  P5   | Pravá pět přes horizont do          (R=48.2 m, d=30.0 m)
+[8197.5 m]  L1!  | Levá jedna vracák přes horizont     (R=15.4 m, d=67.5 m)
+[8297.5 m]  P2   | Pravá dva přes horizont             (R=12.2 m, d=37.5 m)
+[8360.0 m]  L5   | Levá pět do                         (R=71.6 m, d=37.5 m)
+[8407.5 m]  P4!  | Pravá čtyři dlouhá utahuje do dva přes horizont do (R=17.7 m, d=120.0 m)
+[8542.5 m]  L2   | Levá dva přes horizont do           (R=23.3 m, d=50.0 m)
+[8597.5 m]  P3   | Pravá tři dlouhá přes horizont do   (R=45.4 m, d=85.0 m)
+[8700.0 m]  L5   | Levá pět do                         (R=110.4 m, d=55.0 m)
+[8775.0 m]  P4   | Pravá čtyři                         (R=30.7 m, d=50.0 m)
 [8830.0 m]   ↑   | Dále 80
-[8910.0 m]  L5   | Levá pět                            (R=56.2 m, d=22.5 m)
-[8937.5 m]   ↑   | Dále 350
-[9265.0 m]  P5   | Pravá pět přes horizont do          (R=50.1 m, d=22.5 m)
-[9300.0 m]  L5   | Levá pět do                         (R=96.1 m, d=42.5 m)
-[9347.5 m]   ↑   | Dále 90
-[9435.0 m]  L5   | Levá pět                            (R=66.5 m, d=27.5 m)
+[8910.0 m]  L5   | Levá pět                            (R=52.2 m, d=22.5 m)
+[8937.5 m]   ↑   | Dále 280
+[9207.5 m]  P5   | Pravá pět dlouhá přes horizont do   (R=47.4 m, d=80.0 m)
+[9300.0 m]  L4   | Levá čtyři dlouhá                   (R=67.9 m, d=85.0 m)
+[9390.0 m]   ↑   | Dále 50
+[9435.0 m]  L5   | Levá pět                            (R=61.1 m, d=27.5 m)
 [9467.5 m]   ↑   | Dále 40
-[9505.0 m]  L4   | Levá čtyři přes horizont            (R=27.8 m, d=30.0 m)
-[9540.0 m]   ↑   | Dále 200
-[9725.0 m]  P4   | Pravá čtyři přes horizont           (R=38.5 m, d=30.0 m)
+[9505.0 m]  L4   | Levá čtyři přes horizont            (R=24.0 m, d=30.0 m)
+[9540.0 m]   ↑   | Dále 120
+[9650.0 m]  P4   | Pravá čtyři dlouhá přes horizont    (R=29.9 m, d=105.0 m)
 [9760.0 m]   ↑   | Dále 70
-[9827.5 m]  P5   | Pravá pět přes horizont             (R=50.4 m, d=20.0 m)
-[9880.0 m]  L5   | Levá pět                            (R=101.4 m, d=40.0 m)
-[9925.0 m]   ↑   | Dále 80
-[9997.5 m]  L2   | Levá dva přes horizont              (R=16.7 m, d=45.0 m)
-[10047.5 m]   ↑   | Dále 280
-[10317.5 m]  L5   | Levá pět                            (R=61.3 m, d=20.0 m)
-[10365.0 m]  P2   | Pravá dva přes horizont do          (R=23.2 m, d=52.5 m)
-[10422.5 m]  L4   | Levá čtyři do                       (R=30.4 m, d=27.5 m)
-[10465.0 m]  P4   | Pravá čtyři                         (R=102.3 m, d=65.0 m)
-[10535.0 m]   ↑   | Dále 40
-[10567.5 m]  L3   | Levá tři                            (R=43.9 m, d=55.0 m)
+[9827.5 m]  P5   | Pravá pět přes horizont             (R=46.2 m, d=20.0 m)
+[9852.5 m]   ↑   | Dále 160
+[10000.0 m]  L2   | Levá dva přes horizont              (R=14.9 m, d=40.0 m)
+[10045.0 m]   ↑   | Dále 300
+[10365.0 m]  P2   | Pravá dva přes horizont do          (R=22.3 m, d=52.5 m)
+[10422.5 m]  L4   | Levá čtyři do                       (R=25.7 m, d=27.5 m)
+[10467.5 m]  P5   | Pravá pět                           (R=86.2 m, d=60.0 m)
+[10532.5 m]   ↑   | Dále 40
+[10570.0 m]  L3   | Levá tři                            (R=39.8 m, d=52.5 m)
 [10627.5 m]   ↑   | Dále 40
-[10657.5 m]  P3   | Pravá tři dlouhá do                 (R=59.7 m, d=77.5 m)
-[10750.0 m]  L4   | Levá čtyři do                       (R=55.8 m, d=42.5 m)
-[10800.0 m]  P4   | Pravá čtyři                         (R=37.3 m, d=30.0 m)
+[10657.5 m]  P3   | Pravá tři dlouhá do                 (R=43.1 m, d=77.5 m)
+[10752.5 m]  L4   | Levá čtyři do                       (R=47.1 m, d=40.0 m)
+[10800.0 m]  P4   | Pravá čtyři                         (R=34.4 m, d=30.0 m)
 [10835.0 m]   ↑   | Dále 90
-[10922.5 m]  L3   | Levá tři                            (R=50.9 m, d=65.0 m)
+[10922.5 m]  L3   | Levá tři                            (R=31.6 m, d=65.0 m)
 [10992.5 m]   ↑   | Dále 100
-[11090.0 m]  P4   | Pravá čtyři do                      (R=64.1 m, d=60.0 m)
+[11090.0 m]  P4   | Pravá čtyři                         (R=48.2 m, d=60.0 m)
 [11155.0 m]   ↑   | Dále 90
-[11242.5 m]  P4   | Pravá čtyři otevírá přes horizont do (R=39.1 m, d=45.0 m)
-[11302.5 m]  L4   | Levá čtyři přes horizont            (R=30.7 m, d=22.5 m)
+[11242.5 m]  P4   | Pravá čtyři otevírá přes horizont do (R=33.8 m, d=45.0 m)
+[11302.5 m]  L4   | Levá čtyři přes horizont            (R=29.3 m, d=22.5 m)
 [11330.0 m]   ↑   | Dále 100
-[11427.5 m]  L5   | Levá pět do                         (R=72.1 m, d=55.0 m)
-[11505.0 m]  L5   | Levá pět                            (R=74.8 m, d=35.0 m)
-[11545.0 m]   ↑   | Dále 160
-[11690.0 m]  P5!  | Pravá pět dlouhá utahuje do tři do  (R=52.6 m, d=102.5 m)
-[11812.5 m]  L3   | Levá tři dlouhá                     (R=55.7 m, d=102.5 m)
+[11427.5 m]  L3   | Levá tři dlouhá                     (R=57.3 m, d=110.0 m)
+[11542.5 m]   ↑   | Dále 160
+[11692.5 m]  P4!  | Pravá čtyři dlouhá utahuje do tři do (R=24.4 m, d=100.0 m)
+[11812.5 m]  L2   | Levá dva dlouhá                     (R=39.9 m, d=102.5 m)
 [11920.0 m]   ↑   | Dále 100
-[12010.0 m]  P4   | Pravá čtyři                         (R=69.2 m, d=50.0 m)
+[12010.0 m]  P4   | Pravá čtyři                         (R=40.7 m, d=50.0 m)
 [12065.0 m]   ↑   | Dále 200
-[12250.0 m]  L5   | Levá pět přes horizont              (R=58.2 m, d=30.0 m)
+[12250.0 m]  L5   | Levá pět přes horizont              (R=47.1 m, d=30.0 m)
 [12285.0 m]   ↑   | Dále 70
-[12352.5 m]  P4   | Pravá čtyři                         (R=23.0 m, d=25.0 m)
+[12352.5 m]  P4   | Pravá čtyři                         (R=21.1 m, d=25.0 m)
 [12382.5 m]   ↑   | Dále 90
-[12467.5 m]  P2   | Pravá dva                           (R=10.9 m, d=22.5 m)
+[12467.5 m]  P2   | Pravá dva                           (R=10.3 m, d=22.5 m)
 [12495.0 m]   ↑   | Dále 70
-[12562.5 m]  L2   | Levá dva přes horizont              (R=19.4 m, d=50.0 m)
+[12562.5 m]  L2   | Levá dva přes horizont              (R=14.3 m, d=50.0 m)
 [12617.5 m]   ↑   | Dále 100
-[12720.0 m]  L5   | Levá pět do                         (R=53.9 m, d=35.0 m)
-[12762.5 m]  P1!  | Pravá jedna vracák                  (R=20.1 m, d=75.0 m)
+[12720.0 m]  L5   | Levá pět do                         (R=42.0 m, d=35.0 m)
+[12762.5 m]  P1!  | Pravá jedna vracák                  (R=14.4 m, d=75.0 m)

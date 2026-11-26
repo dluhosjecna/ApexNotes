@@ -361,12 +361,32 @@
     return Math.abs((totalRad * 180) / Math.PI);
   }
 
-  function classifyCorner(effR, turnAngleDeg) {
-    if (effR > 245 || turnAngleDeg < 14) return { sev: 0, isHairpin: false };
+  function computeCoreRadius(cPts) {
+    if (cPts.length <= 2) return Math.min(...cPts.map((p) => p.r));
+    let best = 9999;
+    for (let i = 0; i < cPts.length - 2; i++) {
+      const avg3 = (cPts[i].r + cPts[i + 1].r + cPts[i + 2].r) / 3;
+      if (avg3 < best) best = avg3;
+    }
+    return best;
+  }
+
+  function classifyCorner(effR, turnAngleDeg, lengthM = 30) {
+    if (effR > 215 || turnAngleDeg < 18) return { sev: 0, isHairpin: false };
     if (turnAngleDeg >= 130 && effR < 34) return { sev: 1, isHairpin: true };
     if (turnAngleDeg >= 118 && effR < 18) return { sev: 1, isHairpin: false };
 
-    let sev = effR < 40 ? 2 : effR < 70 ? 3 : effR < 110 ? 4 : effR < 170 ? 5 : 6;
+    let sev;
+    if (effR < 40) sev = 2;
+    else if (effR < 70) sev = 3;
+    else if (effR < 110) sev = 4;
+    else if (effR < 165) sev = 5;
+    else {
+      // Stupeň 6 hlásíme jen pro výraznější dlouhý oblouk, ne pro drobnou vlnku
+      if (turnAngleDeg < 24 || lengthM < 25) return { sev: 0, isHairpin: false };
+      sev = 6;
+    }
+
     if (turnAngleDeg < 28) sev = Math.max(sev, 5);
     else if (turnAngleDeg < 48) sev = Math.max(sev, 4);
     else if (turnAngleDeg < 70) sev = Math.max(sev, 3);
@@ -453,14 +473,14 @@
       }
     }
 
-    // 5. Extrakce zatáček
+    // 5. Extrakce zatáček + bezpečnostní sloučení stejnosměrných úseků
     const rawCorners = [];
     let i = wOff;
     while (i < nPts - wOff) {
-      if (pts[i].r <= 235) {
+      if (pts[i].r <= 215) {
         const cDir = pts[i].dir;
         const cPts = [];
-        while (i < nPts - wOff && pts[i].r <= 240 && pts[i].dir === cDir) {
+        while (i < nPts - wOff && pts[i].r <= 220 && pts[i].dir === cDir) {
           cPts.push(pts[i]);
           i++;
         }
@@ -472,47 +492,90 @@
       }
     }
 
+    // Sloučení stejnosměrných zatáček (mezera <= 35 m vždy, nebo <= 65 m u mírný nájezd -> ostrá)
     const merged = [];
     for (const rc of rawCorners) {
       if (merged.length) {
         const prev = merged[merged.length - 1];
-        if (prev.dir === rc.dir && (rc.cPts[0].s - prev.cPts[prev.cPts.length - 1].s) < 18) {
-          prev.cPts = prev.cPts.concat(rc.cPts);
-          continue;
+        const gap = rc.cPts[0].s - prev.cPts[prev.cPts.length - 1].s;
+        if (prev.dir === rc.dir) {
+          const prevR = computeCoreRadius(prev.cPts);
+          const currR = computeCoreRadius(rc.cPts);
+          const isMildAndSharp = (prevR >= 95 && currR < 65) || (currR >= 95 && prevR < 65);
+          if (gap <= 35 || (gap <= 65 && isMildAndSharp)) {
+            prev.cPts = prev.cPts.concat(rc.cPts);
+            continue;
+          }
         }
       }
       merged.push(rc);
     }
 
-    const sevWords = { 1: 'jedna', 2: 'dva', 3: 'tři', 4: 'čtyři', 5: 'pět', 6: 'šest' };
-    const pacenotes = [];
+    // Vyhodnocení zatáček
+    const evaluated = [];
     for (const item of merged) {
       const cPts = item.cPts;
-      const sortedR = cPts.map((p) => p.r).sort((a, b) => a - b);
-      const effR = sortedR[Math.floor(sortedR.length * 0.25)];
+      const lenM = cPts[cPts.length - 1].s - cPts[0].s;
+      const effR = computeCoreRadius(cPts);
       const turnAngle = computeTurnAngleDeg(cPts);
-      const { sev, isHairpin } = classifyCorner(effR, turnAngle);
+      const { sev, isHairpin } = classifyCorner(effR, turnAngle, lenM);
       if (sev === 0) continue;
+      evaluated.push({
+        dir: item.dir,
+        cPts,
+        startS: cPts[0].s,
+        endS: cPts[cPts.length - 1].s,
+        lenM,
+        effR,
+        turnAngle,
+        sev,
+        isHairpin
+      });
+    }
 
+    // Bezpečnostní post-pass: NIKDY nehlásit klamavou mírnou zatáčku (5/6) těsně před ostrou (1-3) ve stejném směru!
+    const safeList = [];
+    for (const item of evaluated) {
+      if (safeList.length) {
+        const prev = safeList[safeList.length - 1];
+        const gap = item.startS - prev.endS;
+        if (prev.dir === item.dir && gap <= 70) {
+          if (prev.sev >= 5 && item.sev <= 3) {
+            safeList[safeList.length - 1] = item;
+            continue;
+          }
+          if (prev.sev <= 3 && item.sev >= 5 && item.turnAngle < 32) {
+            prev.endS = item.endS;
+            prev.lenM = prev.endS - prev.startS;
+            continue;
+          }
+        }
+      }
+      safeList.push(item);
+    }
+
+    const sevWords = { 1: 'jedna', 2: 'dva', 3: 'tři', 4: 'čtyři', 5: 'pět', 6: 'šest' };
+    const pacenotes = [];
+    for (const item of safeList) {
+      const cPts = item.cPts;
       const apex = cPts.reduce((best, p) => (p.r < best.r ? p : best), cPts[0]);
       const dirWord = item.dir === 'L' ? 'Levá' : 'Pravá';
-      const lenM = cPts[cPts.length - 1].s - cPts[0].s;
 
       pacenotes.push({
         id: pacenotes.length + 1,
         type: 'corner',
         dir: item.dir,
-        severity: sev,
-        is_hairpin: isHairpin,
-        is_long: lenM >= 70 && !isHairpin,
-        distance_m: Math.round(cPts[0].s),
-        end_distance_m: Math.round(cPts[cPts.length - 1].s),
-        radius_m: effR,
-        turn_angle_deg: Math.round(turnAngle),
+        severity: item.sev,
+        is_hairpin: item.isHairpin,
+        is_long: item.lenM >= 75 && !item.isHairpin,
+        distance_m: Math.round(item.startS),
+        end_distance_m: Math.round(item.endS),
+        radius_m: Math.round(item.effR * 10) / 10,
+        turn_angle_deg: Math.round(item.turnAngle),
         lat: apex.lat,
         lon: apex.lon,
-        short_label: `${item.dir}${sev}${isHairpin ? '!' : ''}`,
-        call_cz: `${dirWord} ${sevWords[sev]}${isHairpin ? ' vracák' : ''}`
+        short_label: `${item.dir}${item.sev}${item.isHairpin ? '!' : ''}`,
+        call_cz: `${dirWord} ${sevWords[item.sev]}${item.isHairpin ? ' vracák' : ''}`
       });
     }
 
